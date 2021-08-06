@@ -249,11 +249,11 @@ net.Receive("gspeak_broadcast", function ( len, ply )
 			net.WriteBool(value)
 		net.Broadcast()
 
-		print("[GSpeak] Player "..ply:Nick().." setting broadcast to "..value)
+		print("[GSpeak] Player "..ply:Nick().." setting broadcast to "..(value and "true" or "false"))
 
 		ply.broadcasting = value
 	else
-		print("[GSpeak] Player "..ply:Nick().." attempted setting broadcast to "..value)
+		print("[GSpeak] Player "..ply:Nick().." attempted setting broadcast to "..(value and "true" or "false"))
 		net.Start("gspeak_failed")
 			net.WriteString("No permissions")
 		net.Send(ply)

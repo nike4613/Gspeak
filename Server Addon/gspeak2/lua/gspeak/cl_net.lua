@@ -36,7 +36,7 @@ net.Receive("gspeak_ply_broadcast", function ( len )
 	local ply = net.ReadEntity()
 	local value = net.ReadBool()
 	if gspeak.cl.TS.connected and IsValid(ply) and ply:IsPlayer() then
-		print("[GSpeak] Player "..ply:Nick().." set broadcasting to "..value)
+		print("[GSpeak] Player "..ply:Nick().." set broadcasting to "..(value and "true" or "false"))
 		ply.broadcasting = value
 		local tsid = gspeak:get_tsid(ply)
 		if tsid ~= -1 then
