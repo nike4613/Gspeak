@@ -99,7 +99,8 @@ hook.Add( "RenderScreenspaceEffects", "gspeak_icon", function()
 		end
 
 		//Thendon you need to clean this mess
-		if ( LocalPlayer():GetPos():Distance(ply_pos) < tonumber(gspeak.settings.distances.iconview) and ply_alive ) or ( !client_alive and !ply_alive and gspeak.settings.dead_chat and !gspeak.cl.dead_muted) then
+		if ( LocalPlayer():GetPos():Distance(ply_pos) < tonumber(gspeak.settings.distances.iconview) and ply_alive ) 
+			or ( !client_alive and !ply_alive and gspeak.settings.dead_chat and !gspeak.cl.dead_muted) then
 			if !client_alive and !ply_alive then
 				local slot = ply.dead_slot or 1
 				ply_pos = gspeak.clientPos + dead_circle[slot]

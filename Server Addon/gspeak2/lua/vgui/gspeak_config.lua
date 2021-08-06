@@ -61,6 +61,141 @@ local function GetKeyString( key_enum )
 	return (key_enum == KEY_NONE ) and "error" or input.GetKeyName(key_enum)
 end
 
+local function MakeSettingPane(xp, yp, ydist, parent) 
+	return {
+		xbase = xp,
+		ybase = yp,
+		xp = xp,
+		yp = yp,
+		ydist = ydist,
+		parent = parent,
+		resetOnRow = false
+	}
+end
+
+local function KeybindElem(panel, label, setting, defaultText)
+	if label then
+		local DLabel = vgui.Create( "DLabel", pane.parent )
+		DLabel:SetPos( panel.xp, panel.yp )
+		DLabel:SetSize( 300, 25 )
+		DLabel:SetText( label )
+	end
+	local DLabel = vgui.Create( "DLabel", pane.parent )
+	DLabel:SetName( setting )
+	DLabel.Client = true
+	DLabel:SetPos( panel.xp+100, panel.yp )
+	DLabel:SetSize( 150, 25 )
+	DLabel:SetColor( Color( 255, 255, 255, 255 ))
+	DLabel:SetTextColor( Color(0,0,255,255) )
+	DLabel:SetFont("TnfTiny")
+	DLabel:SetMouseInputEnabled( true )
+	DLabel:SetText( GetKeyString(gspeak.cl.settings[setting]) )
+	DLabel.DoClick = gui_key_trapper
+	DLabel.Think = function ( Panel )
+		if gspeak.cl.settings[setting] != Panel:GetText() then
+			Panel:SetText( GetKeyString(gspeak.cl.settings[setting]) )
+		end
+	end
+	if defaultText then
+		local DLabel = vgui.Create( "DLabel", pane.parent )
+		DLabel:SetPos( panel.xp+200, panel.yp )
+		DLabel:SetSize( 300, 25 )
+		DLabel:SetText( defaultText )
+	end
+end
+
+local function get_nested(table, name)
+	local function impl(names, i, tbl)
+		if i < #names then return impl(names, i+1, tbl[names[i]]) end
+		return tbl[names[i]]
+	end
+
+	return impl(string.Explode(".", name), 1, table)
+end
+
+local function set_nested(table, name, value)
+	local function impl(names, i, tbl)
+		if i < #names then impl(names, i+1, tbl[names[i]]) return end
+		tbl[names[i]] = value
+	end
+
+	impl(string.Explode(".", name), 1, table)
+end
+
+local function CheckboxElem(pane, label, setting, table, multiCol)
+	local DLabel = vgui.Create( "DLabel", pane.parent )
+	DLabel:SetPos( pane.xp, pane.yp )
+	DLabel:SetSize( 150, 25 )
+	DLabel:SetText( label )
+	local DCheckBox = vgui.Create( "DCheckBox", pane.parent )
+	DCheckBox:SetPos( pane.xp+150, pane.yp )
+	DCheckBox:SetValue( get_nested(table, setting) )
+	DCheckBox.OnChange = function( panel )
+		set_nested(table, setting, panel:GetChecked())
+	end
+	if multiCol then
+		pane.xp = pane.xp+175
+		pane.resetOnRow = true
+end
+
+local function SliderElem(pane, name, min, max, decs, table, label, defaultText)
+	local DSlider = vgui.Create( "DNumSlider", pane.parent )
+	DSlider:SetName( name )
+	DSlider:SetPos( pane.xp, pane.yp )
+	DSlider:SetSize( 300, 25 )
+	DSlider:SetText( label )
+	DSlider:SetMin( min )
+	DSlider:SetMax( max )
+	DSlider:SetDecimals( decs )
+	DSlider:SetValue( get_nested(table, name) )
+	DSlider.Think = gui_think_slider
+	if defaultText then
+		local DLabel = vgui.Create( "DLabel", pane.parent )
+		DLabel:SetPos( pane.xp+300, pane.yp )
+		DLabel:SetSize( 200, 25 )
+		DLabel:SetText( defaultText )
+	end
+end
+
+local function LabelElem(pane, label, hsize, vsize)
+	local DLabel = vgui.Create( "DLabel", DermaActive )
+	DLabel:SetPos( pane.xp, pane.yp )
+	DLabel:SetSize( hsize or 125, vsize or 25 )
+	DLabel:SetText( label )
+end
+
+local function ChoiceElem(pane, name, table, choices, label)
+	local DLabel = vgui.Create( "DLabel", DermaActive )
+	DLabel:SetPos( pane.xp, pane.yp )
+	DLabel:SetSize( 50, 25 )
+	DLabel:SetText( label )
+	local DMulti = vgui.Create( "DComboBox", DermaActive )
+	for k, v in pairs(choices) do
+		DMulti:AddChoice(v)
+	end
+	DMulti:SetName( name )
+	DMulti:SetPos( pane.xp+50, pane.yp )
+	DMulti:SetSize( 100, 25 )
+	DMulti:SetText( get_nested(table, name) )
+	DMulti.OnSelect = gui_change
+end
+
+local function OffsetX(pane, xdist)
+	pane.xp = pane.xp + xdist
+end
+
+local function ResetX(pane)
+	pane.xp = pane.xbase
+end
+
+local function EndRow(pane, ydist)
+	pane.yp = pane.yp + (ydist or pane.ydist)
+	if pane.resetOnRow then
+		ResetX(pane)
+		pane.resetOnRow = frame_blend.RenderableFrames()
+	end
+end
+
 local function DrawContent(panel, active)
 	local dsizex, dsizey = panel:GetSize()
 	local txt_color = Color(255,255,255,255)
@@ -80,210 +215,52 @@ local function DrawContent(panel, active)
 	DImage:SetImage( "gspeak/gspeak_logo_new.png" )
 	DImage:SetImageColor(Color(255,255,255,40))
 
-	local xPos = 25
-	local yPos = 50
-	local diff = 50
+	local pane = MakeSettingPane(25, 50, 50, DermaActive)
 
 	if active == 1 then
-
-		yPos = yPos + diff
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 300, 25 )
-		DLabel:SetText( "Talkmode Key" )
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetName( "key" )
-		DLabel.Client = true
-		DLabel:SetPos( xPos+100, yPos )
-		DLabel:SetSize( 150, 25 )
-		DLabel:SetColor( Color( 255, 255, 255, 255 ))
-		DLabel:SetTextColor( Color(0,0,255,255) )
-		DLabel:SetFont("TnfTiny")
-		DLabel:SetMouseInputEnabled( true )
-		DLabel:SetText( GetKeyString(gspeak.cl.settings.key) )
-		DLabel.DoClick = gui_key_trapper
-		DLabel.Think = function ( Panel )
-			if gspeak.cl.settings[name] != Panel:GetText() then
-				Panel:SetText( GetKeyString(gspeak.cl.settings.key) )
-			end
-		end
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+200, yPos )
-		DLabel:SetSize( 300, 25 )
-		DLabel:SetText( "(default - "..GetKeyString(gspeak.settings.def_key)..")" )
-
+		KeybindElem(pane, "Talkmode Key", "key", "(default - "..GetKeyString(gspeak.settings.def_key)..")")
 		if gspeak.settings.radio.use_key then
-			yPos = yPos + 50
-			local DLabel = vgui.Create( "DLabel", DermaActive )
-			DLabel:SetPos( xPos, yPos )
-			DLabel:SetSize( 300, 25 )
-			DLabel:SetText( "Radio Key" )
-			local DLabel = vgui.Create( "DLabel", DermaActive )
-			DLabel:SetName( "radio_key" )
-			DLabel.Client = true
-			DLabel:SetPos( xPos+100, yPos )
-			DLabel:SetSize( 150, 25 )
-			DLabel:SetColor( Color( 255, 255, 255, 255 ))
-			DLabel:SetTextColor( Color(0,0,255,255) )
-			DLabel:SetFont("TnfTiny")
-			DLabel:SetMouseInputEnabled( true )
-			DLabel:SetText( GetKeyString(gspeak.cl.settings.radio_key) )
-			DLabel.DoClick = gui_key_trapper
-			DLabel.Think = function ( Panel )
-				if gspeak.cl.settings[name] != Panel:GetText() then
-					Panel:SetText( GetKeyString(gspeak.cl.settings.radio_key) )
-				end
-			end
-			local DLabel = vgui.Create( "DLabel", DermaActive )
-			DLabel:SetPos( xPos+200, yPos )
-			DLabel:SetSize( 300, 25 )
-			DLabel:SetText( "(default - "..GetKeyString(gspeak.settings.radio.def_key)..")" )
+			EndRow(pane)
+			KeybindElem(pane, "Radio Key", "radio_key", "(default - "..GetKeyString(gspeak.settings.radio.def_key)..")")
 		end
 		if gspeak.settings.dead_chat then
-			yPos = yPos + 50
-			local DLabel = vgui.Create( "DLabel", DermaActive )
-			DLabel:SetPos( xPos, yPos )
-			DLabel:SetSize( 125, 25 )
-			DLabel:SetText( "Mute dead/spectator:" )
-			local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-			DCheckBox:SetPos( xPos+125, yPos )
-			DCheckBox:SetValue( gspeak.cl.dead_muted )
-			DCheckBox.OnChange = function( panel )
-				gspeak.cl.dead_muted = panel:GetChecked()
-			end
+			EndRow(pane)
+			CheckboxElem(pane, "Mute dead/spectator:", "dead_muted", gspeak.cl)
 		end
 	elseif active == 2 then
-		local DSlider = vgui.Create( "DNumSlider", DermaActive )
-		DSlider:SetName( "radio.down" )
-		DSlider:SetPos( xPos, yPos )
-		DSlider:SetSize( 300, 25 )
-		DSlider:SetText( "Radio downsampling" )
-		DSlider:SetMin( 1 )
-		DSlider:SetMax( 10 )
-		DSlider:SetDecimals( 0 )
-		DSlider:SetValue( gspeak.settings.radio.down )
-		DSlider.Think = gui_think_slider
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+300, yPos )
-		DLabel:SetSize( 200, 25 )
-		DLabel:SetText( "def = 4 (lowering samples)" )
-		yPos = yPos + 25
-		local DSlider = vgui.Create( "DNumSlider", DermaActive )
-		DSlider:SetName( "radio.dist" )
-		DSlider:SetPos( xPos, yPos )
-		DSlider:SetSize( 300, 25 )
-		DSlider:SetText( "Radio distortion" )
-		DSlider:SetMin( 0 )
-		DSlider:SetMax( 10000 )
-		DSlider:SetDecimals( 0 )
-		DSlider:SetValue( gspeak.settings.radio.dist )
-		DSlider.Think = gui_think_slider
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+300, yPos )
-		DLabel:SetSize( 200, 25 )
-		DLabel:SetText( "def = 1500 (cuts each sample)" )
-		yPos = yPos + 25
-		local DSlider = vgui.Create( "DNumSlider", DermaActive )
-		DSlider:SetName( "radio.volume" )
-		DSlider:SetPos( xPos, yPos )
-		DSlider:SetSize( 300, 25 )
-		DSlider:SetText( "Radio volume" )
-		DSlider:SetMin( 0 )
-		DSlider:SetMax( 3 )
-		DSlider:SetDecimals( 2 )
-		DSlider:SetValue( gspeak.settings.radio.volume )
-		DSlider.Think = gui_think_slider
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+300, yPos )
-		DLabel:SetSize( 200, 25 )
-		DLabel:SetText( "def = 1.5 (volume boost for the radio)" )
-		yPos = yPos + 25
-		local DSlider = vgui.Create( "DNumSlider", DermaActive )
-		DSlider:SetName( "radio.noise" )
-		DSlider:SetPos( xPos, yPos )
-		DSlider:SetSize( 300, 25 )
-		DSlider:SetText( "Radio noise volume" )
-		DSlider:SetMin( 0 )
-		DSlider:SetMax( 0.1 )
-		DSlider:SetDecimals( 3 )
-		DSlider:SetValue( gspeak.settings.radio.noise )
-		DSlider.Think = gui_think_slider
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+300, yPos )
-		DLabel:SetSize( 200, 25 )
-		DLabel:SetText( "def = 0.010 (volume of white noise)" )
+		SliderElem(pane, "radio.down", 1, 10, 0, gspeak.settings,
+			"Radio downsampling", "def = 4 (lowering samples)")
+		EndRow(pane, 25)
+		SliderElem(pane, "radio.dist", 0, 10000, 0, gspeak.settings,
+			"Radio distortion", "def = 1500 (cuts each sample)" )
+		EndRow(pane, 25)
+		SliderElem(pane, "radio.volume", 0, 3, 2, gspeak.settings,
+			"Radio volume", "def = 1.5 (volume boost for the radio)")
+		EndRow(pane, 25)
+		SliderElem(pane, "radio.noise", 0, 0.1, 3, gspeak.settings,
+			"Radio noise volume", "def = 0.010 (volume of white noise)")
+		EndRow(pane)
 
 		local choices = { "start_com", "end_com", "radio_beep1", "radio_beep2", "radio_click1", "radio_click2" }
 
-		yPos = yPos + diff
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 125, 25 )
-		DLabel:SetText( "Default radio sound" )
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+125, yPos )
-		DLabel:SetSize( 50, 25 )
-		DLabel:SetText( "Startcom:" )
-		local DMulti = vgui.Create( "DComboBox", DermaActive )
-		for k, v in pairs(choices) do
-			DMulti:AddChoice(v)
-		end
-		DMulti:SetName( "radio.start" )
-		DMulti:SetPos( xPos+175, yPos )
-		DMulti:SetSize( 100, 25 )
-		DMulti:SetText( gspeak.settings.radio.start )
-		DMulti.OnSelect = gui_change
-		yPos = yPos + 25
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+125, yPos )
-		DLabel:SetSize( 50, 25 )
-		DLabel:SetText( "Endcom:" )
-		local DMulti = vgui.Create( "DComboBox", DermaActive )
-		for k, v in pairs(choices) do
-			DMulti:AddChoice(v)
-		end
-		DMulti:SetName( "radio.stop" )
-		DMulti:SetPos( xPos+175, yPos )
-		DMulti:SetSize( 100, 25 )
-		DMulti:SetText( gspeak.settings.radio.stop )
-		DMulti.OnSelect = gui_change
+		LabelElem(pane, "Default radio sound")
+		OffsetX(125)
+		ChoiceElem(pane, "radio.start", gspeak.settings, choices, "Startcom:")
+		EndRow(pane, 25)
+		ChoiceElem(pane, "radio.stop", gspeak.settings, choices, "Endcom:")
+		EndRow(pane, 25)
+		ResetX()
 
-		yPos = yPos + 25
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 200, 25 )
-		DLabel:SetText( "Trigger effect at talk" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "trigger_at_talk" )
-		DCheckBox:SetPos( xPos+175, yPos+5 )
-		DCheckBox:SetValue( gspeak.settings.trigger_at_talk )
-		DCheckBox.OnChange = gui_change
+		CheckboxElem(pane, "Trigger effect at talk", "trigger_at_talk", gspeak.settings)
+		EndRow(pane, 25)
+		CheckboxElem(pane, "Auto add custom sounds to FastDL", "auto_fastdl", gspeak.settings)
+		EndRow(pane)
 
-		yPos = yPos + 25
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 200, 25 )
-		DLabel:SetText( "Auto add custom sounds to FastDL" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "auto_fastdl" )
-		DCheckBox:SetPos( xPos+175, yPos+5 )
-		DCheckBox:SetValue( gspeak.settings.auto_fastdl )
-		DCheckBox.OnChange = gui_change
-
-		yPos = yPos + diff
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 125, 25 )
-		DLabel:SetText( "Radio Key (on/off)" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "radio.use_key" )
-		DCheckBox:SetPos( xPos+100, yPos+5 )
-		DCheckBox:SetValue( gspeak.settings.radio.use_key )
-		DCheckBox.OnChange = gui_change
+		CheckboxElem(pane, "Radio Key (on/off)", "radio.use_key", gspeak.settings, true)
 
 		local DLabel = vgui.Create( "DLabel", DermaActive )
 		DLabel:SetName( "radio.def_key" )
-		DLabel:SetPos( xPos+130, yPos )
+		DLabel:SetPos( pane.xp+5, pane.yp )
 		DLabel:SetSize( 150, 25 )
 		DLabel:SetColor( Color( 255, 255, 255, 255 ))
 		DLabel:SetTextColor( Color(0,0,255,255) )
@@ -296,24 +273,14 @@ local function DrawContent(panel, active)
 				Panel:SetText( GetKeyString(gspeak.settings.radio.def_key) )
 			end
 		end
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos+25 )
-		DLabel:SetSize( 325, 25 )
-		DLabel:SetText( "If unchecked, radio will start sending when it's holded and\nstop when it's holstered." )
+		EndRow(pane, 25)
+		LabelElem(pane, "If unchecked, radio will start sending when it's held and\nstop when it's holstered.", 325)
+		EndRow(pane)
 
-		yPos = yPos + diff
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 125, 50 )
-		DLabel:SetText( "Should radios be\nhearable by near\nplayers" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "radio.hearable" )
-		DCheckBox:SetPos( xPos+125, yPos+15 )
-		DCheckBox:SetValue( gspeak.settings.radio.hearable )
-		DCheckBox.OnChange = gui_change
+		CheckboxElem(pane, "Should radios be\nhearable by near\nplayers", "radio.hearable", gspeak.settings)
 	elseif active == 3 then
 		local AppList = vgui.Create( "DListView", DermaActive )
-		AppList:SetPos( xPos, yPos )
+		AppList:SetPos( pane.xp, pane.yp )
 		AppList:SetSize( 400, 150 )
 		AppList:SetMultiSelect( false )
 		AppList:AddColumn( "Name" ):SetFixedWidth( 75 )
@@ -332,7 +299,7 @@ local function DrawContent(panel, active)
 			send_setting( { name = "distances.modes", value = update_table } )
 		end
 		AppList:Refresh()
-		yPos = yPos + 150
+		EndRow(pane, 150)
 
 		local function EditMode( TPanel, ID )
 			local DermaPanel = vgui.Create( "DFrame" )
@@ -501,7 +468,9 @@ local function DrawContent(panel, active)
 		DTextEntry:SetSize( 75, 25 )
 		DTextEntry:SetText( gspeak.settings.distances.iconview )
 		DTextEntry.OnEnter = gui_change
+
 		yPos = yPos + diff - 20
+
 		local DLabel = vgui.Create( "DLabel", DermaActive )
 		DLabel:SetPos( xPos, yPos )
 		DLabel:SetSize( 300, 25 )
@@ -513,6 +482,7 @@ local function DrawContent(panel, active)
 		DTextEntry:SetText( gspeak.settings.distances.radio )
 		DTextEntry.OnEnter = gui_change
 		yPos = yPos + diff - 20
+
 		local DSlider = vgui.Create( "DNumSlider", DermaActive )
 		DSlider:SetName( "distances.heightclamp" )
 		DSlider:SetPos( xPos, yPos )
@@ -548,156 +518,71 @@ local function DrawContent(panel, active)
 			gspeak.viewranges = panel:GetChecked()
 		end
 	elseif active == 4 then
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 125, 25 )
-		DLabel:SetText( "Shown above head:" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "head_icon" )
-		DCheckBox:SetPos( xPos+125, yPos )
-		DCheckBox:SetValue( gspeak.settings.head_icon )
-		DCheckBox.OnChange = gui_change
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+150, yPos )
-		DLabel:SetSize( 50, 25 )
-		DLabel:SetText( "Icon" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "head_name" )
-		DCheckBox:SetPos( xPos+200, yPos )
-		DCheckBox:SetValue( gspeak.settings.head_name )
-		DCheckBox.OnChange = gui_change
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+225, yPos )
-		DLabel:SetSize( 50, 25 )
-		DLabel:SetText( "Name" )
+		LabelElem(pane, "Shown above head:")
+		EndRow(pane)
+		OffsetX(125)
+		CheckboxElem(pane, "Icon", "head_icon", gspeak.settings, true)
+		CheckboxElem(pane, "Name", "head_name", gspeak.settings, true)
+		EndRow(pane)
+		
+		SliderElem(pane, "HUD.console.x", 0, 1, 2, gspeak.settings, "Talk UI x")
+		OffsetX(300)
+		ChoiceElem(pane, "HUD.console.align", gspeak.settings, { "tl", "tr", "bl", "br" }, "align:")
+		ResetX()
+		EndRow(pane, 25)
 
-		yPos = yPos + diff
-		local DSlider = vgui.Create( "DNumSlider", DermaActive )
-		DSlider:SetName( "HUD.console.x" )
-		DSlider:SetPos( xPos, yPos )
-		DSlider:SetSize( 300, 25 )
-		DSlider:SetText( "Talk UI x" )
-		DSlider:SetMin( 0 )
-		DSlider:SetMax( 1 )
-		DSlider:SetDecimals( 2 )
-		DSlider:SetValue( gspeak.settings.HUD.console.x )
-		DSlider.Think = gui_think_slider
+		SliderElem(pane, "HUD.console.y", 0, 1, 2, gspeak.settings, "Talk UI y")
+		EndRow(pane, 25)
 
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+300, yPos )
-		DLabel:SetSize( 50, 25 )
-		DLabel:SetText( "align:" )
-		local DMulti = vgui.Create( "DComboBox", DermaActive )
-		DMulti:AddChoice("tl")
-		DMulti:AddChoice("tr")
-		DMulti:AddChoice("bl")
-		DMulti:AddChoice("br")
-		DMulti:SetName( "HUD.console.align" )
-		DMulti:SetPos( xPos+350, yPos )
-		DMulti:SetSize( 50, 25 )
-		DMulti:SetText( gspeak.settings.HUD.console.align )
-		DMulti.OnSelect = gui_change
+		SliderElem(pane, "HUD.status.x", 0, 1, 2, gspeak.settings, "Status UI x")
+		OffsetX(300)
+		ChoiceElem(pane, "HUD.status.align", gspeak.settings, { "tl", "tr", "bl", "br" }, "align:")
+		ResetX()
+		EndRow(pane, 25)
 
-		yPos = yPos + 25
-		local DSlider = vgui.Create( "DNumSlider", DermaActive )
-		DSlider:SetName( "HUD.console.y" )
-		DSlider:SetPos( xPos, yPos )
-		DSlider:SetSize( 300, 25 )
-		DSlider:SetText( "Talk UI y" )
-		DSlider:SetMin( 0 )
-		DSlider:SetMax( 1 )
-		DSlider:SetDecimals( 2 )
-		DSlider:SetValue( gspeak.settings.HUD.console.y )
-		DSlider.Think = gui_think_slider
+		SliderElem(pane, "HUD.status.y", 0, 1, 2, gspeak.settings, "Status UI y")
+		EndRow(pane)
 
-		yPos = yPos + 25
-		local DSlider = vgui.Create( "DNumSlider", DermaActive )
-		DSlider:SetName( "HUD.status.x" )
-		DSlider:SetPos( xPos, yPos )
-		DSlider:SetSize( 300, 25 )
-		DSlider:SetText( "Status UI x" )
-		DSlider:SetMin( 0 )
-		DSlider:SetMax( 1 )
-		DSlider:SetDecimals( 2 )
-		DSlider:SetValue( gspeak.settings.HUD.status.x )
-		DSlider.Think = gui_think_slider
-
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+300, yPos )
-		DLabel:SetSize( 50, 25 )
-		DLabel:SetText( "align:" )
-		local DMulti = vgui.Create( "DComboBox", DermaActive )
-		DMulti:AddChoice("tl")
-		DMulti:AddChoice("tr")
-		DMulti:AddChoice("bl")
-		DMulti:AddChoice("br")
-		DMulti:SetName( "HUD.status.align" )
-		DMulti:SetPos( xPos+350, yPos )
-		DMulti:SetSize( 50, 25 )
-		DMulti:SetText( gspeak.settings.HUD.status.align )
-		DMulti.OnSelect = gui_change
-
-		yPos = yPos + 25
-		local DSlider = vgui.Create( "DNumSlider", DermaActive )
-		DSlider:SetName( "HUD.status.y" )
-		DSlider:SetPos( xPos, yPos )
-		DSlider:SetSize( 300, 25 )
-		DSlider:SetText( "Status UI y" )
-		DSlider:SetMin( 0 )
-		DSlider:SetMax( 1 )
-		DSlider:SetDecimals( 2 )
-		DSlider:SetValue( gspeak.settings.HUD.status.y )
-		DSlider.Think = gui_think_slider
-
-		yPos = yPos + diff
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 200, 25 )
-		DLabel:SetText( "Display players nick instead of name" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "nickname" )
-		DCheckBox:SetPos( xPos+200, yPos+5 )
-		DCheckBox:SetValue( gspeak.settings.nickname )
-		DCheckBox.OnChange = gui_change
+		CheckboxElem(pane, "Display players nick instead of name", "nickname", gspeak.settings)
 	elseif active == 5 then
 		diff = 40
+		pane.ydist = 40
 
-		--yPos = yPos + diff
 		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
+		DLabel:SetPos( pane.xp, pane.yp )
 		DLabel:SetSize( 300, 25 )
 		DLabel:SetText( "Channel Password" )
 		local DTextEntry = vgui.Create( "DTextEntry", DermaActive )
 		DTextEntry:SetName( "password" )
-		DTextEntry:SetPos( xPos+130, yPos )
+		DTextEntry:SetPos( pane.xp+130, pane.yp )
 		DTextEntry:SetSize( 150, 25 )
 		DTextEntry:SetText( gspeak.settings.password )
 		DTextEntry.OnEnter = gui_change
 		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+300, yPos )
+		DLabel:SetPos( pane.xp+300, pane.yp )
 		DLabel:SetSize( 300, 25 )
 		DLabel:SetText( "(less than 32 characters)" )
+		EndRow(pane)
 
-		yPos = yPos + diff
 		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
+		DLabel:SetPos( pane.xp, pane.yp )
 		DLabel:SetSize( 300, 25 )
 		DLabel:SetText( "Command" )
 		local DTextEntry = vgui.Create( "DTextEntry", DermaActive )
 		DTextEntry:SetName( "cmd" )
-		DTextEntry:SetPos( xPos+130, yPos )
+		DTextEntry:SetPos( pane.xp+130, pane.yp )
 		DTextEntry:SetSize( 150, 25 )
 		DTextEntry:SetText( gspeak.settings.cmd )
 		DTextEntry.OnEnter = gui_change
+		EndRow(pane)
 
-		yPos = yPos + diff
 		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
+		DLabel:SetPos( pane.xp, pane.yp )
 		DLabel:SetSize( 300, 25 )
 		DLabel:SetText( "Talkmode Default Key" )
 		local DLabel = vgui.Create( "DLabel", DermaActive )
 		DLabel:SetName( "def_key" )
-		DLabel:SetPos( xPos+130, yPos )
+		DLabel:SetPos( pane.xp+130, pane.yp )
 		DLabel:SetSize( 150, 25 )
 		DLabel:SetColor( Color( 255, 255, 255, 255 ))
 		DLabel:SetTextColor( Color(0,0,255,255) )
@@ -710,95 +595,37 @@ local function DrawContent(panel, active)
 				Panel:SetText( GetKeyString(gspeak.settings.def_key) )
 			end
 		end
+		EndRow(pane, 50)
+		
+		CheckboxElem(pane, "Override Default Voice", "overrideV", gspeak.settings, true)
+		CheckboxElem(pane, "Override Default Chat", "overrideC", gspeak.settings, true)
+		EndRow(pane)
 
-		yPos = yPos + diff + 10
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 125, 25 )
-		DLabel:SetText( "Override Default Voice" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "overrideV" )
-		DCheckBox:SetPos( xPos+125, yPos+5 )
-		DCheckBox:SetValue( gspeak.settings.overrideV )
-		DCheckBox.OnChange = gui_change
+		CheckboxElem(pane, "Dead/Spectator Voicechat", "dead_chat", gspeak.settings, true)
+		CheckboxElem(pane, "Should dead hear living?", "dead_alive", gspeak.settings, true)
+		EndRow(pane)
 
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+175, yPos )
-		DLabel:SetSize( 125, 25 )
-		DLabel:SetText( "Override Default Chat" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "overrideC" )
-		DCheckBox:SetPos( xPos+300, yPos+5 )
-		DCheckBox:SetValue( gspeak.settings.overrideC )
-		DCheckBox.OnChange = gui_change
+		CheckboxElem(pane, "Initial move into channel?", "def_initialForceMove", gspeak.settings, true)
+		CheckboxElem(pane, "Auto rename players in TS3?", "updateName", gspeak.settings, true)
+		EndRow(pane)
 
-		yPos = yPos + diff
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 125, 25 )
-		DLabel:SetText( "Dead/Spectator Voicechat" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "dead_chat" )
-		DCheckBox:SetPos( xPos+125, yPos+5 )
-		DCheckBox:SetValue( gspeak.settings.dead_chat )
-		DCheckBox.OnChange = gui_change
+		CheckboxElem(pane, "Should all hear commander?", "hear_channel_commander", gspeak.settings, true)
+		EndRow(pane)
 
 		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+175, yPos )
-		DLabel:SetSize( 125, 25 )
-		DLabel:SetText( "Should dead hear living?" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "dead_alive" )
-		DCheckBox:SetPos( xPos+300, yPos+5 )
-		DCheckBox:SetValue( gspeak.settings.dead_alive )
-		DCheckBox.OnChange = gui_change
-
-		yPos = yPos + diff
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 125, 25 )
-		DLabel:SetText( "Initial move into channel?" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "def_initialForceMove" )
-		DCheckBox:SetPos( xPos+125, yPos+5 )
-		DCheckBox:SetValue( gspeak.settings.def_initialForceMove )
-		DCheckBox.OnChange = gui_change
-
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos+175, yPos )
-		DLabel:SetSize( 125, 25 )
-		DLabel:SetText( "Auto rename players in TS3?" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "updateName" )
-		DCheckBox:SetPos( xPos+300, yPos+5 )
-		DCheckBox:SetValue( gspeak.settings.updateName )
-		DCheckBox.OnChange = gui_change
-
-		yPos = yPos + diff
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
-		DLabel:SetSize( 125, 25 )
-		DLabel:SetText( "Should all hear commander?" )
-		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
-		DCheckBox:SetName( "hear_channel_commander" )
-		DCheckBox:SetPos( xPos+175, yPos+5 )
-		DCheckBox:SetValue( gspeak.settings.hear_channel_commander )
-		DCheckBox.OnChange = gui_change
-
-		yPos = yPos + diff
-		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
+		DLabel:SetPos( pane.xp, pane.yp )
 		DLabel:SetSize( 300, 25 )
 		DLabel:SetText( "IP-Address" )
 		local DTextEntry = vgui.Create( "DTextEntry", DermaActive )
 		DTextEntry:SetName( "ts_ip" )
-		DTextEntry:SetPos( xPos+130, yPos )
+		DTextEntry:SetPos( pane.xp+130, pane.yp )
 		DTextEntry:SetSize( 150, 25 )
 		DTextEntry:SetText( gspeak.settings.ts_ip )
 		DTextEntry.OnEnter = gui_change
-		yPos = yPos + 20
+		EndRow(pane, 20)
+
 		local DLabel = vgui.Create( "DLabel", DermaActive )
-		DLabel:SetPos( xPos, yPos )
+		DLabel:SetPos( pane.xp, pane.yp )
 		DLabel:SetSize( 450, 25 )
 		DLabel:SetText( "note: Just an info for the User, Gspeak will work without an entry" )
 	end
