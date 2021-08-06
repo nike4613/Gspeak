@@ -84,3 +84,4 @@ end
 
 include("gspeak/cl_net.lua")
 include("gspeak/cl_hooks.lua")
+include("gspeak/cl_concmd.lua")

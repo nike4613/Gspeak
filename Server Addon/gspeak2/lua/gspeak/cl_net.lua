@@ -81,7 +81,7 @@ net.Receive("gspeak_init", function( len )
 		v[1].ts_id = v[3]
 		v[1].talking = v[4]
 		v[1].range = v[5]
-		v[1].broadcasting = v[6]
+		v[1].broadcasting = v[6] or false
 	end
 
 	--[[for k, v in pairs(radio_var_table) do

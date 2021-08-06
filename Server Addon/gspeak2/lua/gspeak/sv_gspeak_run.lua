@@ -248,6 +248,8 @@ net.Receive("gspeak_broadcast", function ( len, ply )
 			net.WriteBool(value)
 		net.Broadcast()
 
+		print("[GSpeak] Player", ply:Nick(), "setting broadcast to", value)
+
 		ply.broadcasting = value
 	else
 		net.Start("gspeak_failed")
