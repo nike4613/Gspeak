@@ -299,17 +299,21 @@ bool gs_isChannel(uint64 serverConnectionHandlerID, uint64 channelID) {
 	return false;
 }
 
-bool gs_alwaysHearClient(Status* status, uint64 serverConnectionHandlerID, anyID clientId) {
+bool gs_canAlwaysHearClient(Status* status, uint64 serverConnectionHandlerID, anyID clientId) {
 	int isCommander;
 	return status->hear_channel_commander
 		&& ts3Functions.getClientVariableAsInt(serverConnectionHandlerID, clientId, CLIENT_IS_CHANNEL_COMMANDER, &isCommander) == ERROR_ok
 		&& isCommander;
 }
 
+bool gs_canAlwaysHearGspeakClient(Status* status, uint64 serverConnectionHandlerID, Clients* client) {
+	return client->broadcasting || gs_canAlwaysHearClient(status, serverConnectionHandlerID, client->clientID);
+}
+
 void gs_scanClients(Status* status, Clients* clients, uint64 serverConnectionHandlerID) {
 	TS3_VECTOR position;
 	for (int i = 0; clients[i].clientID != 0 && i < PLAYER_MAX; i++) {
-		if (gs_alwaysHearClient(status, serverConnectionHandlerID, clients[i].clientID)) {
+		if (gs_canAlwaysHearGspeakClient(status, serverConnectionHandlerID, &clients[i])) {
 			TS3_VECTOR zero{ 0.0, 0.0, 0.0 };
 			ts3Functions.channelset3DAttributes(serverConnectionHandlerID, clients[i].clientID, &zero);
 			continue;
@@ -537,7 +541,7 @@ void ts3plugin_onEditPostProcessVoiceDataEvent(uint64 serverConnectionHandlerID,
 
 	clients[it].volume_ts = 0;
 
-	bool alwaysHear = gs_alwaysHearClient(status, serverConnectionHandlerID, clientID);
+	bool alwaysHear = gs_canAlwaysHearClient(status, serverConnectionHandlerID, clientID);
 
 	//If a client was found in array
 	if (it > -1) {
