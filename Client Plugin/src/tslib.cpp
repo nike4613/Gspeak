@@ -480,7 +480,7 @@ int gs_getAllID(lua_State* state) {
 #define EXPORT_FUNCS(M) \
 	M(connectTS) M(sendSettings) M(sendName) \
 	M(getName) M(compareName) M(forceMove) \
-	M(update) M(sendClientPos) M(delPos) \
+	M(update) M(sendClientPos) M(sendPos) M(delPos) \
 	M(delAll) M(getTsID) M(getInChannel) \
 	M(getArray) M(talkCheck) M(getGspeakVersion) \
 	M(setClientBroadcasting) M(getAllID)
