@@ -226,7 +226,7 @@ void gs_criticalError(int errorCode) {
 	printf("%s\n", msg);
 }
 
-int gs_openMapFile(HANDLE *hMapFile, TCHAR *name, unsigned int buf_size) {
+int gs_openMapFile(HANDLE *hMapFile, TCHAR const* name, unsigned int buf_size) {
 	*hMapFile = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, name);
 	if (*hMapFile == NULL) {
 		int code = GetLastError();
@@ -250,7 +250,7 @@ int gs_openMapFile(HANDLE *hMapFile, TCHAR *name, unsigned int buf_size) {
 	return 0;
 }
 
-bool gs_searchChannel(Status* status, uint64 serverConnectionHandlerID, anyID clientID) {
+bool gs_searchChannel(Status const* status, uint64 serverConnectionHandlerID, anyID clientID) {
 	uint64 *channels;
 	if (ts3Functions.getChannelList(serverConnectionHandlerID, &channels) == ERROR_ok) {
 		uint64 localChannelID;
@@ -299,18 +299,18 @@ bool gs_isChannel(uint64 serverConnectionHandlerID, uint64 channelID) {
 	return false;
 }
 
-bool gs_canAlwaysHearClient(Status* status, uint64 serverConnectionHandlerID, anyID clientId) {
+bool gs_canAlwaysHearClient(Status const* status, uint64 serverConnectionHandlerID, anyID clientId) {
 	int isCommander;
 	return status->hear_channel_commander
 		&& ts3Functions.getClientVariableAsInt(serverConnectionHandlerID, clientId, CLIENT_IS_CHANNEL_COMMANDER, &isCommander) == ERROR_ok
 		&& isCommander;
 }
 
-bool gs_canAlwaysHearGspeakClient(Status* status, uint64 serverConnectionHandlerID, Client* client) {
+bool gs_canAlwaysHearGspeakClient(Status const* status, uint64 serverConnectionHandlerID, Client const* client) {
 	return client->broadcasting || gs_canAlwaysHearClient(status, serverConnectionHandlerID, client->clientID);
 }
 
-void gs_scanClients(Status* status, Client* clients, uint64 serverConnectionHandlerID) {
+void gs_scanClients(Status const* status, Client const* clients, uint64 serverConnectionHandlerID) {
 	TS3_VECTOR position;
 	for (int i = 0; clients[i].clientID != 0 && i < PLAYER_MAX; i++) {
 		if (gs_canAlwaysHearGspeakClient(status, serverConnectionHandlerID, &clients[i])) {
@@ -353,7 +353,7 @@ void gs_kickClient(uint64 serverConnectionHandlerID, anyID clientID) {
 	ts3Functions.requestClientKickFromChannel(serverConnectionHandlerID, clientID, "Gspeak Kick Command", NULL);
 }
 */
-bool gs_nameCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientID) {
+bool gs_nameCheck(Status const* status, uint64 serverConnectionHandlerID, anyID clientID) {
 	if (!gs_inChannel( status ))
 		return false;
 

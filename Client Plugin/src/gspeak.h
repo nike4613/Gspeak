@@ -36,15 +36,15 @@ extern "C" {
 	void gs_shutdown();
 	bool gs_isMe(uint64 serverConnectionHandlerID, anyID clientID);
 	void gs_criticalError(int errorCode);
-	int gs_openMapFile(HANDLE *hMapFile, TCHAR *name, unsigned int buf_size);
-	bool gs_searchChannel(Status* status, uint64 serverConnectionHandlerID, anyID clientID);
+	int gs_openMapFile(HANDLE *hMapFile, TCHAR const* name, unsigned int buf_size);
+	bool gs_searchChannel(Status const* status, uint64 serverConnectionHandlerID, anyID clientID);
 	void gs_clientMoved(uint64 serverConnectionHandlerID, anyID clientID, uint64 channelID);
 	bool gs_isChannel(uint64 serverConnectionHandlerID, uint64 channelID);
-	void gs_scanClients(Status* status, Client* clients, uint64 serverConnectionHandlerID);
+	void gs_scanClients(Status const* status, Client const* clients, uint64 serverConnectionHandlerID);
 	void gs_clientThread(uint64 serverConnectionHandlerID, uint64 channelID);
 	void gs_statusThread();
 	void gs_cmdCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientID);
-	bool gs_nameCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientID);
+	bool gs_nameCheck(Status const* status, uint64 serverConnectionHandlerID, anyID clientID);
 	int gs_findClient(Client* clients, anyID clientID);
 
 	PLUGINS_EXPORTDLL void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, const char* moveMessage); 

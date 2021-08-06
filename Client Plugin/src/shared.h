@@ -40,8 +40,8 @@ struct Status {
 	bool hear_channel_commander;
 };
 
-bool gs_inChannel(Status *status);
-bool gs_gmodOnline(Status *status);
-bool gs_tsOnline(Status *status);
+bool gs_inChannel(Status const* status);
+bool gs_gmodOnline(Status const* status);
+bool gs_tsOnline(Status const* status);
 
 #endif
