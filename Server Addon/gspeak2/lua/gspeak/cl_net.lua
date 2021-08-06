@@ -8,12 +8,12 @@ net.Receive("ts_ply_id", function( len )
 end)
 
 net.Receive("ts_ply_talking", function( len )
-	ply = net.ReadEntity()
+	local ply = net.ReadEntity()
 	ply.talking = net.ReadBool()
 end)
 
 net.Receive("ts_ply_talkmode", function ( len )
-	ply = net.ReadEntity()
+	local ply = net.ReadEntity()
 	ply.talkmode = net.ReadInt( 32 )
 	ply.range = net.ReadInt( 32 )
 end)
@@ -28,8 +28,19 @@ net.Receive("gspeak_name_change", function( len )
 end)
 
 net.Receive("gspeak_ply_disc", function ( len )
-	index = net.ReadInt(32)
+	local index = net.ReadInt(32)
 	if gspeak.cl.TS.connected then tslib.delPos(index, false, -1) end
+end)
+
+net.Receive("gspeak_ply_broadcast", function ( len )
+	local ply = net.ReadEntity()
+	local value = net.ReadBool()
+	if gspeak.cl.TS.connected and IsValid(ply) and ply:IsPlayer() then
+		local tsid = gspeak:get_tsid(ply)
+		if tsid ~= -1 then
+			tslib.setClientBroadcasting(tsid, value)
+		end
+	end
 end)
 
 net.Receive("gspeak_server_settings", function()
@@ -42,6 +53,11 @@ end)
 net.Receive("gspeak_failed_broadcast", function(len)
 	local ply = net.ReadEntity()
 	ply.failed = true
+end)
+
+net.Receive("gspeak_failed", function(len)
+	local msg = net.ReadString()
+	print("[GSpeak] ERROR from server:", msg)
 end)
 
 net.Receive("gspeak_init", function( len )
@@ -65,6 +81,7 @@ net.Receive("gspeak_init", function( len )
 		v[1].ts_id = v[3]
 		v[1].talking = v[4]
 		v[1].range = v[5]
+		v[1].broadcasting = v[6]
 	end
 
 	--[[for k, v in pairs(radio_var_table) do

@@ -236,6 +236,8 @@ hook.Add("Think", "Gspeak", function()
 				continue
 			end
 
+			tslib.setClientBroadcasting(ts_id_v, v.broadcasting)
+
 			if distance < distance_max then
 				tslib.sendPos(ts_id_v, gspeak:calcVolume( distance, distance_max ), v_index, playerPos.x, playerPos.y, playerPos.z, false)
 			end

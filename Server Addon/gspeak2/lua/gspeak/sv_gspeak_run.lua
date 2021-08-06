@@ -22,6 +22,8 @@ util.AddNetworkString( "gspeak_init" )
 util.AddNetworkString( "gspeak_request_init" )
 util.AddNetworkString( "gspeak_setting_change" )
 util.AddNetworkString( "gspeak_name_change" )
+util.AddNetworkString( "gspeak_broadcast" )
+util.AddNetworkString( "gspeak_ply_broadcast" )
 util.AddNetworkString( "radio_freq_change" )
 util.AddNetworkString( "radio_sending_change" )
 util.AddNetworkString( "radio_online_change" )
@@ -238,6 +240,22 @@ net.Receive("ts_talkmode", function ( len, ply )
 	gspeak:broadcast_talkmode(ply)
 end)
 
+net.Receive("gspeak_broadcast", function ( len, ply )
+	local value = net.ReadBool()
+	if ply:IsAdmin() then
+		net.Start("gspeak_ply_broadcast")
+			net.WriteEntity(ply)
+			net.WriteBool(value)
+		net.Broadcast()
+
+		ply.broadcasting = value
+	else
+		net.Start("gspeak_failed")
+			net.WriteString("No permissions")
+		net.Send(ply)
+	end
+end)
+
 net.Receive("gspeak_failed", function( len, ply )
 	net.Start( "gspeak_failed_broadcast" )
 		net.WriteEntity(ply)
@@ -256,6 +274,7 @@ net.Receive("gspeak_request_init", function( len, ply )
 			table.insert(ply_table, 3, v.ts_id)
 			table.insert(ply_table, 4, v.talking or false)
 			table.insert(ply_table, 5, gspeak:get_talkmode_range(v.talkmode) --[[gspeak.settings.distances.modes[v.talkmode].range]] or 0 )
+			table.insert(ply_table, 6, v.broadcasting or false)
 			table.insert(all_ply_table, ply_table)
 		elseif v:IsRadio() then
 			local radio_table = {}
