@@ -210,7 +210,7 @@ void gs_shutdown() {
 
 void gs_criticalError(int errorCode) {
 	char msg[48];
-	sprintf(msg, "[Gspeak] critical error - Code: %d", errorCode);
+	sprintf_s(msg, "[Gspeak] critical error - Code: %d", errorCode);
 	ts3Functions.printMessageToCurrentTab(msg);
 	printf("%s\n", msg);
 }
@@ -288,13 +288,17 @@ bool gs_isChannel(uint64 serverConnectionHandlerID, uint64 channelID) {
 	return false;
 }
 
+bool gs_alwaysHearClient(uint64 serverConnectionHandlerID, anyID clientId) {
+	int isCommander;
+	return status->hear_channel_commander
+		&& ts3Functions.getClientVariableAsInt(serverConnectionHandlerID, clientId, CLIENT_IS_CHANNEL_COMMANDER, &isCommander) == ERROR_ok
+		&& isCommander;
+}
+
 void gs_scanClients(uint64 serverConnectionHandlerID) {
 	TS3_VECTOR position;
 	for (int i = 0; clients[i].clientID != 0 && i < PLAYER_MAX; i++) {
-		int isCommander;
-		if (status->hear_channel_commander 
-			&& ts3Functions.getClientVariableAsInt(serverConnectionHandlerID, clients[i].clientID, CLIENT_IS_CHANNEL_COMMANDER, &isCommander) == ERROR_ok
-			&& isCommander) {
+		if (gs_alwaysHearClient(serverConnectionHandlerID, clients[i].clientID)) {
 			TS3_VECTOR zero{ 0.0, 0.0, 0.0 };
 			ts3Functions.channelset3DAttributes(serverConnectionHandlerID, clients[i].clientID, &zero);
 			continue;
@@ -500,9 +504,17 @@ void ts3plugin_onEditPostProcessVoiceDataEvent(uint64 serverConnectionHandlerID,
 	if (!clientThreadActive) return;
 	int it = gs_findClient(clientID);
 
+	clients[it].volume_ts = 0;
+
+	if (gs_alwaysHearClient(serverConnectionHandlerID, clientID)) {
+		// make no changes
+		return;
+	}
+
 	//If a client was found in array
 	if (it > -1) {
 		if (clients[it].talking != true) clients[it].talking = true;
+
 		//If volume between 0 and 1
 		if (clients[it].volume_gm > 0 && clients[it].volume_gm <= 1) {
 			float sum = 0;
@@ -518,7 +530,13 @@ void ts3plugin_onEditPostProcessVoiceDataEvent(uint64 serverConnectionHandlerID,
 						float noise = (((float)rand() / RAND_MAX) * SHORT_SIZE * 2) - SHORT_SIZE;
 						for (int j = 0; j < channels; j++) {
 							//Distortion
-							short sample_new = (short)((samples[sample_it] > status->radio_distortion ? status->radio_distortion : samples[sample_it] < status->radio_distortion*(-1) ? status->radio_distortion*(-1) : samples[sample_it]) * status->radio_volume * clients[it].volume_gm);
+							short sample_new = static_cast<short>(
+								(samples[sample_it] > status->radio_distortion 
+									? status->radio_distortion 
+									: samples[sample_it] < status->radio_distortion*(-1) 
+										? status->radio_distortion*(-1) 
+										: samples[sample_it])
+								* status->radio_volume * clients[it].volume_gm);
 							short sample_noise = (short)(sample_new + noise * status->radio_volume_noise);
 							//Downsampling future samples
 							bool temp_bool = false;
@@ -546,8 +564,8 @@ void ts3plugin_onEditPostProcessVoiceDataEvent(uint64 serverConnectionHandlerID,
 			clients[it].volume_ts = sum / sampleCount / VOLUME_MAX;
 			return;
 		}
-		clients[it].volume_ts = 0;
 	}
+
 	for (int i = 0; i < sampleCount; i++) {
 		short sample_it = i * channels;
 		for (int j = 0; j < channels; j++) {
