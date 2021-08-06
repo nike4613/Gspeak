@@ -3,7 +3,7 @@ local function RequestBroadcast(ply, state)
   if ply:IsAdmin() then
     print("Requesting broadcast state change")
     net.Start("gspeak_broadcast")
-      net.WriteBool(value)
+      net.WriteBool(state)
     net.SendToServer()
   else
     print("Not an admin!")
