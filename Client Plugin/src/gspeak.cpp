@@ -117,7 +117,7 @@ int ts3plugin_init() {
 	if (gs_openMapFile(&hMapFileV, statusName, sizeof(Status)) == 1) {
 		return 1;
 	} 
-	status = (Status*)malloc(sizeof(Status));
+	//status = (Status*)malloc(sizeof(Status));
 	status = (Status*)MapViewOfFile(hMapFileV, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(Status));
 	if (status == NULL) {
 		gs_criticalError(GetLastError());
@@ -291,6 +291,15 @@ bool gs_isChannel(uint64 serverConnectionHandlerID, uint64 channelID) {
 void gs_scanClients(uint64 serverConnectionHandlerID) {
 	TS3_VECTOR position;
 	for (int i = 0; clients[i].clientID != 0 && i < PLAYER_MAX; i++) {
+		int isCommander;
+		if (status->hear_channel_commander 
+			&& ts3Functions.getClientVariableAsInt(serverConnectionHandlerID, clients[i].clientID, CLIENT_IS_CHANNEL_COMMANDER, &isCommander) == ERROR_ok
+			&& isCommander) {
+			TS3_VECTOR zero{ 0.0, 0.0, 0.0 };
+			ts3Functions.channelset3DAttributes(serverConnectionHandlerID, clients[i].clientID, &zero);
+			continue;
+		}
+
 		position.x = clients[i].pos[0];
 		position.y = clients[i].pos[1];
 		position.z = clients[i].pos[2];

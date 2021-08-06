@@ -36,6 +36,7 @@ struct Status {
 	bool status; 
 	bool talking;
 	int command;
+	bool hear_channel_commander;
 };
 
 bool gs_inChannel(Status *status);

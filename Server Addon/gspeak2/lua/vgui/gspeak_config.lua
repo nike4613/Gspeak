@@ -662,7 +662,7 @@ local function DrawContent(panel, active)
 	elseif active == 5 then
 		diff = 40
 
-		yPos = yPos + diff
+		--yPos = yPos + diff
 		local DLabel = vgui.Create( "DLabel", DermaActive )
 		DLabel:SetPos( xPos, yPos )
 		DLabel:SetSize( 300, 25 )
@@ -772,6 +772,17 @@ local function DrawContent(panel, active)
 		DCheckBox:SetName( "updateName" )
 		DCheckBox:SetPos( xPos+300, yPos+5 )
 		DCheckBox:SetValue( gspeak.settings.updateName )
+		DCheckBox.OnChange = gui_change
+
+		yPos = yPos + diff
+		local DLabel = vgui.Create( "DLabel", DermaActive )
+		DLabel:SetPos( xPos, yPos )
+		DLabel:SetSize( 125, 25 )
+		DLabel:SetText( "Should all hear commander?" )
+		local DCheckBox = vgui.Create( "DCheckBox", DermaActive )
+		DCheckBox:SetName( "hear_channel_commander" )
+		DCheckBox:SetPos( xPos+175, yPos+5 )
+		DCheckBox:SetValue( gspeak.settings.hear_channel_commander )
 		DCheckBox.OnChange = gui_change
 
 		yPos = yPos + diff

@@ -5,7 +5,7 @@
 */
 
 #define GMMODULE
-#define TSLIB_VERSION 2600
+#define TSLIB_VERSION 2650
 
 #include <GarrysMod/Lua/Interface.h>
 #include <Windows.h>
@@ -189,6 +189,7 @@ int gs_sendSettings(lua_State* state) {
 	LUA->CheckType(3, GarrysMod::Lua::Type::NUMBER); short radio_distortion = (short)LUA->GetNumber(3);
 	LUA->CheckType(4, GarrysMod::Lua::Type::NUMBER); float radio_volume = (float)LUA->GetNumber(4);
 	LUA->CheckType(5, GarrysMod::Lua::Type::NUMBER); float radio_volume_noise = (float)LUA->GetNumber(5);
+	LUA->CheckType(6, GarrysMod::Lua::Type::BOOL); bool hear_channel_commander = LUA->GetBool(6);
 
 	if (strlen(password) >= PASS_BUF) {
 		LUA->PushBool(false);
@@ -200,6 +201,7 @@ int gs_sendSettings(lua_State* state) {
 	status->radio_distortion = radio_distortion;
 	status->radio_volume = radio_volume;
 	status->radio_volume_noise = radio_volume_noise;
+	status->hear_channel_commander = hear_channel_commander;
 
 	LUA->PushBool(true);
 	return 1;
