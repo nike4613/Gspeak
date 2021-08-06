@@ -136,6 +136,7 @@ local function CheckboxElem(pane, label, setting, table, multiCol)
 	if multiCol then
 		pane.xp = pane.xp+175
 		pane.resetOnRow = true
+	end
 end
 
 local function SliderElem(pane, name, min, max, decs, table, label, defaultText)
@@ -192,7 +193,7 @@ local function EndRow(pane, ydist)
 	pane.yp = pane.yp + (ydist or pane.ydist)
 	if pane.resetOnRow then
 		ResetX(pane)
-		pane.resetOnRow = frame_blend.RenderableFrames()
+		pane.resetOnRow = false
 	end
 end
 
