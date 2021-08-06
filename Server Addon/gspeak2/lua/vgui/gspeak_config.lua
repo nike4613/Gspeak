@@ -124,13 +124,13 @@ end
 
 local function CheckboxElem(pane, label, setting, table, multiCol)
 	local DCheckBox = vgui.Create( "DCheckBox", pane.parent )
-	DCheckBox:SetPos( pane.xp, pane.yp )
+	DCheckBox:SetPos( pane.xp, pane.yp+5 )
 	DCheckBox:SetValue( get_nested(table, setting) )
 	DCheckBox.OnChange = function( panel )
 		set_nested(table, setting, panel:GetChecked())
 	end
 	local DLabel = vgui.Create( "DLabel", pane.parent )
-	DLabel:SetPos( pane.xp+10, pane.yp )
+	DLabel:SetPos( pane.xp+25, pane.yp )
 	DLabel:SetSize( 150, 25 )
 	DLabel:SetText( label )
 	if multiCol then
@@ -278,7 +278,7 @@ local function DrawContent(panel, active)
 		LabelElem(pane, "If unchecked, radio will start sending when it's held and\nstop when it's holstered.", 325)
 		EndRow(pane)
 
-		CheckboxElem(pane, "Should radios be\nhearable by near\nplayers", "radio.hearable", gspeak.settings)
+		CheckboxElem(pane, "Should radios be hearable by near players", "radio.hearable", gspeak.settings)
 	elseif active == 3 then
 		local AppList = vgui.Create( "DListView", DermaActive )
 		AppList:SetPos( pane.xp, pane.yp )
