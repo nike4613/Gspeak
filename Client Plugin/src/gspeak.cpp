@@ -19,6 +19,7 @@
 #include "shared.h"
 #include "gspeak.h"
 #include <string>
+#include <atomic>
 
 static struct TS3Functions ts3Functions;
 
@@ -65,10 +66,10 @@ HANDLE hMapFileV;
 TCHAR clientName[] = TEXT("Local\\GMapO");
 TCHAR statusName[] = TEXT("Local\\GMapV");
 
-bool statusThreadActive;
-bool statusThreadBreak;
-bool clientThreadActive;
-bool clientThreadBreak;
+std::atomic_bool statusThreadActive;
+std::atomic_bool statusThreadBreak;
+std::atomic_bool clientThreadActive;
+std::atomic_bool clientThreadBreak;
 
 using namespace std;
 //*************************************
@@ -164,21 +165,21 @@ void ts3plugin_shutdown() {
 //*************************************
 
 void gs_initClients(uint64 serverConnectionHandlerID, uint64 channelID) {
-	clientThreadBreak = false;
+	clientThreadBreak.store(false, std::memory_order_release);
 	thread(gs_clientThread, serverConnectionHandlerID, channelID).detach();
 }
 
 void gs_initStatus() {
-	statusThreadBreak = false;
+	statusThreadBreak.store(false, std::memory_order_release);
 	thread(gs_statusThread).detach();
 }
 
 void gs_shutClients() {
-	clientThreadBreak = true;
+	clientThreadBreak.store(true, std::memory_order_release);
 }
 
 void gs_shutStatus() {
-	statusThreadBreak = true;
+	statusThreadBreak.store(true, std::memory_order_release);
 }
 
 void gs_setIdle() {
@@ -194,10 +195,10 @@ void gs_setActive(uint64 serverConnectionHandlerID, uint64 channelID) {
 void gs_shutdown() {
 	status->gspeakV = -1;
 
-	if (clientThreadActive) gs_shutClients();
-	if (statusThreadActive) gs_shutStatus();
+	if (clientThreadActive.load(std::memory_order_acquire)) gs_shutClients();
+	if (statusThreadActive.load(std::memory_order_acquire)) gs_shutStatus();
 	while (true) {
-		if (!clientThreadActive && !statusThreadActive) {
+		if (!clientThreadActive.load(std::memory_order_acquire) && !statusThreadActive.load(std::memory_order_acquire)) {
 			UnmapViewOfFile(status);
 			CloseHandle(hMapFileV);
 			hMapFileV = NULL;
@@ -368,7 +369,6 @@ void gs_setStatusName(uint64 serverConnectionHandlerID, anyID clientID, char* cl
 }
 
 void gs_clientThread(uint64 serverConnectionHandlerID, uint64 channelID) {
-	clientThreadActive = true;
 	printf("[Gspeak] clientThread created\n");
 
 	//Open shared memory struct: clients
@@ -384,8 +384,10 @@ void gs_clientThread(uint64 serverConnectionHandlerID, uint64 channelID) {
 		hMapFileO = NULL;
 		return;
 	}
+	clientThreadActive.store(true, std::memory_order_release);
 	printf("[Gspeak] has been loaded successfully\n");
 	ts3Functions.printMessageToCurrentTab("[Gspeak] has been loaded successfully!");
+
 
 	TS3_VECTOR zero = { 0.0f, 0.0f, 0.0f };
 	TS3_VECTOR forward;
@@ -395,7 +397,7 @@ void gs_clientThread(uint64 serverConnectionHandlerID, uint64 channelID) {
 	ts3Functions.getClientID(serverConnectionHandlerID, &clientID);
 	gs_setStatusName(serverConnectionHandlerID, clientID);
 
-	while (!clientThreadBreak) {
+	while (!clientThreadBreak.load(std::memory_order_acquire)) {
 		ts3Functions.getClientID(serverConnectionHandlerID, &clientID);
 		if (clientID != status->clientID) {
 			status->clientID = clientID;
@@ -415,6 +417,8 @@ void gs_clientThread(uint64 serverConnectionHandlerID, uint64 channelID) {
 		this_thread::sleep_for(chrono::milliseconds(SCAN_SPEED));
 	}	
 
+	clientThreadActive.store(true, std::memory_order_release);
+
 	UnmapViewOfFile(clients);
 	CloseHandle(hMapFileO);
 	hMapFileO = NULL;
@@ -422,14 +426,13 @@ void gs_clientThread(uint64 serverConnectionHandlerID, uint64 channelID) {
 	ts3Functions.printMessageToCurrentTab("[Gspeak] has been shut down!");
 
 	status->clientID = -1;
-	clientThreadActive = false;
 	printf("[Gspeak] clientThread destroyed\n");
 }
 
 void gs_statusThread() {
 	printf("[Gspeak] statusThread created\n");
-	statusThreadActive = true;
-	while (!statusThreadBreak) {
+	statusThreadActive.store(true, std::memory_order_release);
+	while (!statusThreadBreak.load(std::memory_order_acquire)) {
 		//Gmod initialized
 		if (status->tslibV > 0) {
 			uint64 serverID = ts3Functions.getCurrentServerConnectionHandlerID();
@@ -441,7 +444,7 @@ void gs_statusThread() {
 
 		this_thread::sleep_for(chrono::milliseconds(SCAN_SPEED));
 	}
-	statusThreadActive = false;
+	statusThreadActive.store(false, std::memory_order_release);
 	printf("[Gspeak] statusThread destroyed\n");
 }
 
@@ -482,7 +485,7 @@ bool gs_isMe(uint64 serverConnectionHandlerID, anyID clientID) {
 }
 
 void ts3plugin_onTalkStatusChangeEvent(uint64 serverConnectionHandlerID, int talkStatus, int isReceivedWhisper, anyID clientID) {
-	if (!clientThreadActive) return;
+	if (!clientThreadActive.load(std::memory_order_acquire)) return;
 	if (gs_isMe(serverConnectionHandlerID, clientID)) {
 		if (talkStatus == STATUS_TALKING) status->talking = true;
 		else status->talking = false;
@@ -496,12 +499,12 @@ void ts3plugin_onTalkStatusChangeEvent(uint64 serverConnectionHandlerID, int tal
 }
 
 void ts3plugin_onCustom3dRolloffCalculationClientEvent(uint64 serverConnectionHandlerID, anyID clientID, float distance, float* volume) {
-	if (!clientThreadActive) return;
+	if (!clientThreadActive.load(std::memory_order_acquire)) return;
 	*volume = 1.0f;
 }
 
 void ts3plugin_onEditPostProcessVoiceDataEvent(uint64 serverConnectionHandlerID, anyID clientID, short* samples, int sampleCount, int channels, const unsigned int* channelSpeakerArray, unsigned int* channelFillMask) {
-	if (!clientThreadActive) return;
+	if (!clientThreadActive.load(std::memory_order_acquire)) return;
 	int it = gs_findClient(clientID);
 
 	clients[it].volume_ts = 0;
