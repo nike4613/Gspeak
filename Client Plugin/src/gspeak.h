@@ -40,12 +40,12 @@ extern "C" {
 	bool gs_searchChannel(Status* status, uint64 serverConnectionHandlerID, anyID clientID);
 	void gs_clientMoved(uint64 serverConnectionHandlerID, anyID clientID, uint64 channelID);
 	bool gs_isChannel(uint64 serverConnectionHandlerID, uint64 channelID);
-	void gs_scanClients(Status* status, Clients* clients, uint64 serverConnectionHandlerID);
+	void gs_scanClients(Status* status, Client* clients, uint64 serverConnectionHandlerID);
 	void gs_clientThread(uint64 serverConnectionHandlerID, uint64 channelID);
 	void gs_statusThread();
 	void gs_cmdCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientID);
 	bool gs_nameCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientID);
-	int gs_findClient(Clients* clients, anyID clientID);
+	int gs_findClient(Client* clients, anyID clientID);
 
 	PLUGINS_EXPORTDLL void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, const char* moveMessage); 
 	PLUGINS_EXPORTDLL void ts3plugin_onClientMoveMovedEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, anyID moverID, const char* moverName, const char* moverUniqueIdentifier, const char* moveMessage);

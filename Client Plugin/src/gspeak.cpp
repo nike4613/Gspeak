@@ -58,7 +58,7 @@ static int wcharToUtf8(const wchar_t* str, char** result) {
 }
 #endif
 
-struct Clients *clients;
+struct Client *clients;
 struct Status *status;
 
 std::mutex statusLock;
@@ -306,11 +306,11 @@ bool gs_canAlwaysHearClient(Status* status, uint64 serverConnectionHandlerID, an
 		&& isCommander;
 }
 
-bool gs_canAlwaysHearGspeakClient(Status* status, uint64 serverConnectionHandlerID, Clients* client) {
+bool gs_canAlwaysHearGspeakClient(Status* status, uint64 serverConnectionHandlerID, Client* client) {
 	return client->broadcasting || gs_canAlwaysHearClient(status, serverConnectionHandlerID, client->clientID);
 }
 
-void gs_scanClients(Status* status, Clients* clients, uint64 serverConnectionHandlerID) {
+void gs_scanClients(Status* status, Client* clients, uint64 serverConnectionHandlerID) {
 	TS3_VECTOR position;
 	for (int i = 0; clients[i].clientID != 0 && i < PLAYER_MAX; i++) {
 		if (gs_canAlwaysHearGspeakClient(status, serverConnectionHandlerID, &clients[i])) {
@@ -388,11 +388,11 @@ void gs_clientThread(uint64 serverConnectionHandlerID, uint64 channelID) {
 	{
 		std::scoped_lock _lock{ clientsLock };
 		//Open shared memory struct: clients
-		if (gs_openMapFile(&hMapFileO, clientName, sizeof(Clients) * PLAYER_MAX) == 1) {
+		if (gs_openMapFile(&hMapFileO, clientName, sizeof(Client) * PLAYER_MAX) == 1) {
 			printf("[Gspeak] openMapFile error\n");
 			return;
 		}
-		clients = (Clients*)MapViewOfFile(hMapFileO, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(Clients) * PLAYER_MAX);
+		clients = (Client*)MapViewOfFile(hMapFileO, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(Client) * PLAYER_MAX);
 		if (clients == NULL) {
 			gs_criticalError(GetLastError());
 			printf("[Gspeak] could not view file\n");
@@ -473,7 +473,7 @@ void gs_statusThread() {
 	printf("[Gspeak] statusThread destroyed\n");
 }
 
-int gs_findClient(Clients* clients, anyID clientID) {
+int gs_findClient(Client* clients, anyID clientID) {
 	for (int i = 0; clients[i].clientID != 0 && i < PLAYER_MAX; i++) {
 		if (clients[i].clientID == clientID) return i;
 	}

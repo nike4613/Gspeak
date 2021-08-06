@@ -12,7 +12,7 @@
 #define CMD_BAN 4
 #define CMD_BUF 16
 
-struct Clients {
+struct Client {
 	short clientID;
 	float pos[3];
 	float volume_gm;

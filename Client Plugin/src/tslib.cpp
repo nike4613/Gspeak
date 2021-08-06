@@ -19,7 +19,7 @@ struct Clients_local {
 	int radioID;
 };
 
-struct Clients *clients;
+struct Client *clients;
 struct Clients_local *clients_local;
 struct Status *status;
 
@@ -90,11 +90,11 @@ int gs_connectTS(lua_State* state)
 		return 1;
 	}
 
-	if (gs_openMapFile(state, &hMapFileO, clientName, sizeof(Clients)*PLAYER_MAX) == 1 ) {
+	if (gs_openMapFile(state, &hMapFileO, clientName, sizeof(Client)*PLAYER_MAX) == 1 ) {
 		LUA->PushBool(false);
 		return 1;
 	}
-	clients = (Clients*)MapViewOfFile(hMapFileO, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(Clients)*PLAYER_MAX);
+	clients = (Client*)MapViewOfFile(hMapFileO, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(Client)*PLAYER_MAX);
 	clients_local = (Clients_local*)malloc(sizeof(Clients_local)*PLAYER_MAX);
 	if (clients == NULL) {
 		gs_printError(state, "[Gspeak] mapview error ", GetLastError());
