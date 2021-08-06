@@ -159,18 +159,18 @@ local function SliderElem(pane, name, min, max, decs, table, label, defaultText)
 end
 
 local function LabelElem(pane, label, hsize, vsize)
-	local DLabel = vgui.Create( "DLabel", DermaActive )
+	local DLabel = vgui.Create( "DLabel", pane.parent )
 	DLabel:SetPos( pane.xp, pane.yp )
 	DLabel:SetSize( hsize or 125, vsize or 25 )
 	DLabel:SetText( label )
 end
 
 local function ChoiceElem(pane, name, table, choices, label)
-	local DLabel = vgui.Create( "DLabel", DermaActive )
+	local DLabel = vgui.Create( "DLabel", pane.parent )
 	DLabel:SetPos( pane.xp, pane.yp )
 	DLabel:SetSize( 50, 25 )
 	DLabel:SetText( label )
-	local DMulti = vgui.Create( "DComboBox", DermaActive )
+	local DMulti = vgui.Create( "DComboBox", pane.parent )
 	for k, v in pairs(choices) do
 		DMulti:AddChoice(v)
 	end
