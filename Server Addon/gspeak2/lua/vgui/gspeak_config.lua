@@ -75,12 +75,12 @@ end
 
 local function KeybindElem(panel, label, setting, defaultText)
 	if label then
-		local DLabel = vgui.Create( "DLabel", pane.parent )
+		local DLabel = vgui.Create( "DLabel", panel.parent )
 		DLabel:SetPos( panel.xp, panel.yp )
 		DLabel:SetSize( 300, 25 )
 		DLabel:SetText( label )
 	end
-	local DLabel = vgui.Create( "DLabel", pane.parent )
+	local DLabel = vgui.Create( "DLabel", panel.parent )
 	DLabel:SetName( setting )
 	DLabel.Client = true
 	DLabel:SetPos( panel.xp+100, panel.yp )
