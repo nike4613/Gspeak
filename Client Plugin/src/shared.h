@@ -19,6 +19,7 @@ struct Clients {
 	float volume_ts;
 	bool radio;
 	bool talking;
+	bool broadcasting;
 };
 
 struct Status {

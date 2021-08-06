@@ -296,6 +296,23 @@ int gs_sendClientPos(lua_State* state) {
 	return 0;
 }
 
+int gs_setClientBroadcasting(lua_State* state) {
+	LUA->CheckType(1, GarrysMod::Lua::Type::NUMBER); int clientId = (int)LUA->GetNumber(1);
+	LUA->CheckType(2, GarrysMod::Lua::Type::BOOL); bool newVal = LUA->GetBool(2);
+
+	bool exist = false;
+	int i = gs_searchPlayer(state, clientId, &exist);
+
+	if (!exist) {
+		LUA->PushBool(false);
+		return 1;
+	}
+
+	clients[i].broadcasting = newVal;
+	LUA->PushBool(true);
+	return 1;
+}
+
 int gs_sendPos(lua_State* state)
 {
 	LUA->CheckType(1, GarrysMod::Lua::Type::NUMBER); int clientID = (int)LUA->GetNumber(1);
@@ -451,7 +468,8 @@ int gs_getAllID(lua_State* state) {
 			LUA->PushNumber(clients_local[i].radioID); LUA->SetField(-2, "radio_id");
 			LUA->PushNumber(clients[i].volume_ts); LUA->SetField(-2, "volume");
 			LUA->PushBool(clients[i].talking); LUA->SetField(-2, "talking");
-			sprintf_s(it, sizeof(it),"%d", i);
+			LUA->PushBool(clients[i].broadcasting); LUA->SetField(-2, "broadcasting");
+			sprintf_s(it, sizeof(it), "%d", i);
 			LUA->SetField(-2, it);
 		}
 	}
@@ -465,7 +483,8 @@ int gs_getAllID(lua_State* state) {
 	M(update) M(sendClientPos) M(delPos) \
 	M(delAll) M(getTsID) M(getInChannel) \
 	M(getArray) M(talkCheck) M(getGspeakVersion) \
-	/*M(getTsLibVersion)  M(getVolumeOf) */ M(getAllID)
+	M(setClientBroadcasting) M(getAllID)
+	/*M(getTsLibVersion)  M(getVolumeOf) */ 
 
 //*************************************
 // REQUIRED GMOD FUNCTIONS
