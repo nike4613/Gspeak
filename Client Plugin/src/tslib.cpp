@@ -459,6 +459,14 @@ int gs_getAllID(lua_State* state) {
 	return 1;
 }
 
+#define EXPORT_FUNCS(M) \
+	M(connectTS) M(sendSettings) M(sendName) \
+	M(getName) M(compareName) M(forceMove) \
+	M(update) M(sendClientPos) M(delPos) \
+	M(delAll) M(getTsID) M(getInChannel) \
+	M(getArray) M(talkCheck) M(getGspeakVersion) \
+	/*M(getTsLibVersion)  M(getVolumeOf) */ M(getAllID)
+
 //*************************************
 // REQUIRED GMOD FUNCTIONS
 //*************************************
@@ -467,25 +475,10 @@ GMOD_MODULE_OPEN()
 {
 	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
 	LUA->CreateTable();
-	LUA->PushCFunction(gs_connectTS); LUA->SetField(-2, "connectTS");
-	LUA->PushCFunction(gs_sendSettings); LUA->SetField(-2, "sendSettings");
-	LUA->PushCFunction(gs_sendName); LUA->SetField(-2, "sendName");
-	LUA->PushCFunction(gs_getName); LUA->SetField(-2, "getName");
-	LUA->PushCFunction(gs_compareName); LUA->SetField(-2, "compareName");
-	LUA->PushCFunction(gs_forceMove); LUA->SetField(-2, "forceMove");
-	LUA->PushCFunction(gs_update); LUA->SetField(-2, "update");
-	LUA->PushCFunction(gs_sendClientPos); LUA->SetField(-2, "sendClientPos");
-	LUA->PushCFunction(gs_sendPos); LUA->SetField(-2, "sendPos");
-	LUA->PushCFunction(gs_delPos); LUA->SetField(-2, "delPos");
-	LUA->PushCFunction(gs_delAll); LUA->SetField(-2, "delAll");
-	LUA->PushCFunction(gs_getTsID); LUA->SetField(-2, "getTsID");
-	LUA->PushCFunction(gs_getInChannel); LUA->SetField(-2, "getInChannel");
-	LUA->PushCFunction(gs_getArray); LUA->SetField(-2, "getArray");
-	LUA->PushCFunction(gs_talkCheck); LUA->SetField(-2, "talkCheck");
-	LUA->PushCFunction(gs_getGspeakVersion); LUA->SetField(-2, "getGspeakVersion");
+#define SAVE_CFUNC(name) LUA->PushCFunction(gs_##name); LUA->SetField(-2, #name);
+	EXPORT_FUNCS(SAVE_CFUNC);
+#undef SAVE_CFUNC
 	LUA->PushCFunction(gs_getTslibVersion); LUA->SetField(-2, "getVersion");
-	//LUA->PushCFunction(gs_getVolumeOf); LUA->SetField(-2, "getVolumeOf");
-	LUA->PushCFunction(gs_getAllID); LUA->SetField(-2, "getAllID");
 	LUA->SetField(-2, "tslib");
 	LUA->Pop();
 	return 0;
