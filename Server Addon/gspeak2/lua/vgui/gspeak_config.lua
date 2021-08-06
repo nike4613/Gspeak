@@ -245,7 +245,7 @@ local function DrawContent(panel, active)
 		local choices = { "start_com", "end_com", "radio_beep1", "radio_beep2", "radio_click1", "radio_click2" }
 
 		LabelElem(pane, "Default radio sound")
-		OffsetX(125)
+		OffsetX(pane, 125)
 		ChoiceElem(pane, "radio.start", gspeak.settings, choices, "Startcom:")
 		EndRow(pane, 25)
 		ChoiceElem(pane, "radio.stop", gspeak.settings, choices, "Endcom:")
@@ -301,6 +301,10 @@ local function DrawContent(panel, active)
 		end
 		AppList:Refresh()
 		EndRow(pane, 150)
+
+		local xPos = pane.xp
+		local yPos = pane.yp
+		local diff = pane.ydist
 
 		local function EditMode( TPanel, ID )
 			local DermaPanel = vgui.Create( "DFrame" )
@@ -521,13 +525,13 @@ local function DrawContent(panel, active)
 	elseif active == 4 then
 		LabelElem(pane, "Shown above head:")
 		EndRow(pane)
-		OffsetX(125)
+		OffsetX(pane, 125)
 		CheckboxElem(pane, "Icon", "head_icon", gspeak.settings, true)
 		CheckboxElem(pane, "Name", "head_name", gspeak.settings, true)
 		EndRow(pane)
 		
 		SliderElem(pane, "HUD.console.x", 0, 1, 2, gspeak.settings, "Talk UI x")
-		OffsetX(300)
+		OffsetX(pane, 300)
 		ChoiceElem(pane, "HUD.console.align", gspeak.settings, { "tl", "tr", "bl", "br" }, "align:")
 		ResetX()
 		EndRow(pane, 25)
@@ -536,7 +540,7 @@ local function DrawContent(panel, active)
 		EndRow(pane, 25)
 
 		SliderElem(pane, "HUD.status.x", 0, 1, 2, gspeak.settings, "Status UI x")
-		OffsetX(300)
+		OffsetX(pane, 300)
 		ChoiceElem(pane, "HUD.status.align", gspeak.settings, { "tl", "tr", "bl", "br" }, "align:")
 		ResetX()
 		EndRow(pane, 25)
