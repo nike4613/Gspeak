@@ -123,16 +123,16 @@ local function set_nested(table, name, value)
 end
 
 local function CheckboxElem(pane, label, setting, table, multiCol)
-	local DLabel = vgui.Create( "DLabel", pane.parent )
-	DLabel:SetPos( pane.xp, pane.yp )
-	DLabel:SetSize( 150, 25 )
-	DLabel:SetText( label )
 	local DCheckBox = vgui.Create( "DCheckBox", pane.parent )
-	DCheckBox:SetPos( pane.xp+150, pane.yp )
+	DCheckBox:SetPos( pane.xp, pane.yp )
 	DCheckBox:SetValue( get_nested(table, setting) )
 	DCheckBox.OnChange = function( panel )
 		set_nested(table, setting, panel:GetChecked())
 	end
+	local DLabel = vgui.Create( "DLabel", pane.parent )
+	DLabel:SetPos( pane.xp+10, pane.yp )
+	DLabel:SetSize( 150, 25 )
+	DLabel:SetText( label )
 	if multiCol then
 		pane.xp = pane.xp+175
 		pane.resetOnRow = true
@@ -252,8 +252,8 @@ local function DrawContent(panel, active)
 		EndRow(pane, 25)
 		ResetX(pane)
 
-		CheckboxElem(pane, "Trigger effect at talk", "trigger_at_talk", gspeak.settings)
-		EndRow(pane, 25)
+		CheckboxElem(pane, "Trigger effect at talk", "trigger_at_talk", gspeak.settings, true)
+		--EndRow(pane, 25)
 		CheckboxElem(pane, "Auto add custom sounds to FastDL", "auto_fastdl", gspeak.settings)
 		EndRow(pane)
 
@@ -524,7 +524,6 @@ local function DrawContent(panel, active)
 		end
 	elseif active == 4 then
 		LabelElem(pane, "Shown above head:")
-		EndRow(pane)
 		OffsetX(pane, 125)
 		CheckboxElem(pane, "Icon", "head_icon", gspeak.settings, true)
 		CheckboxElem(pane, "Name", "head_name", gspeak.settings, true)
