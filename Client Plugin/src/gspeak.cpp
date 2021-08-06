@@ -20,6 +20,7 @@
 #include "gspeak.h"
 #include <string>
 #include <atomic>
+#include <mutex>
 
 static struct TS3Functions ts3Functions;
 
@@ -60,6 +61,9 @@ static int wcharToUtf8(const wchar_t* str, char** result) {
 struct Clients *clients;
 struct Status *status;
 
+std::mutex statusLock;
+std::mutex clientsLock;
+
 HANDLE hMapFileO;
 HANDLE hMapFileV;
 
@@ -82,7 +86,7 @@ const char* ts3plugin_name() {
 	if (!result) {
 		const wchar_t* name = L"Gspeak2";
 		if (wcharToUtf8(name, &result) == -1) {
-			result = "Gspeak2";
+			return "Gspeak2";
 		}
 	}
 	return result;
@@ -113,6 +117,8 @@ void ts3plugin_setFunctionPointers(const struct TS3Functions funcs) {
 
 int ts3plugin_init() {
 	printf("[Gspeak] init\n");
+
+	std::scoped_lock _lock{ statusLock };
 
 	//Open shared memory struct: status
 	if (gs_openMapFile(&hMapFileV, statusName, sizeof(Status)) == 1) {
@@ -193,12 +199,16 @@ void gs_setActive(uint64 serverConnectionHandlerID, uint64 channelID) {
 }
 
 void gs_shutdown() {
-	status->gspeakV = -1;
+	{
+		std::scoped_lock _lock{ statusLock };
+		status->gspeakV = -1;
+	}
 
 	if (clientThreadActive.load(std::memory_order_acquire)) gs_shutClients();
 	if (statusThreadActive.load(std::memory_order_acquire)) gs_shutStatus();
 	while (true) {
 		if (!clientThreadActive.load(std::memory_order_acquire) && !statusThreadActive.load(std::memory_order_acquire)) {
+			std::scoped_lock _lock{ statusLock, clientsLock };
 			UnmapViewOfFile(status);
 			CloseHandle(hMapFileV);
 			hMapFileV = NULL;
@@ -240,7 +250,7 @@ int gs_openMapFile(HANDLE *hMapFile, TCHAR *name, unsigned int buf_size) {
 	return 0;
 }
 
-bool gs_searchChannel(uint64 serverConnectionHandlerID, anyID clientID) {
+bool gs_searchChannel(Status* status, uint64 serverConnectionHandlerID, anyID clientID) {
 	uint64 *channels;
 	if (ts3Functions.getChannelList(serverConnectionHandlerID, &channels) == ERROR_ok) {
 		uint64 localChannelID;
@@ -273,7 +283,7 @@ void gs_clientMoved(uint64 serverConnectionHandlerID, anyID clientID, uint64 cha
 	if (localClientID == clientID) {
 		if (gs_isChannel(serverConnectionHandlerID, channelID))
 			gs_setActive(serverConnectionHandlerID, channelID);
-		else if (clientThreadActive)
+		else if (clientThreadActive.load(std::memory_order_acquire))
 			gs_setIdle();
 	}
 }
@@ -289,17 +299,17 @@ bool gs_isChannel(uint64 serverConnectionHandlerID, uint64 channelID) {
 	return false;
 }
 
-bool gs_alwaysHearClient(uint64 serverConnectionHandlerID, anyID clientId) {
+bool gs_alwaysHearClient(Status* status, uint64 serverConnectionHandlerID, anyID clientId) {
 	int isCommander;
 	return status->hear_channel_commander
 		&& ts3Functions.getClientVariableAsInt(serverConnectionHandlerID, clientId, CLIENT_IS_CHANNEL_COMMANDER, &isCommander) == ERROR_ok
 		&& isCommander;
 }
 
-void gs_scanClients(uint64 serverConnectionHandlerID) {
+void gs_scanClients(Status* status, Clients* clients, uint64 serverConnectionHandlerID) {
 	TS3_VECTOR position;
 	for (int i = 0; clients[i].clientID != 0 && i < PLAYER_MAX; i++) {
-		if (gs_alwaysHearClient(serverConnectionHandlerID, clients[i].clientID)) {
+		if (gs_alwaysHearClient(status, serverConnectionHandlerID, clients[i].clientID)) {
 			TS3_VECTOR zero{ 0.0, 0.0, 0.0 };
 			ts3Functions.channelset3DAttributes(serverConnectionHandlerID, clients[i].clientID, &zero);
 			continue;
@@ -312,17 +322,17 @@ void gs_scanClients(uint64 serverConnectionHandlerID) {
 	}
 }
 
-void gs_cmdCheck(uint64 serverConnectionHandlerID, anyID clientID) {
+void gs_cmdCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientID) {
 	if (status->command <= 0)
 		return;
 
 	bool success;
 	switch (status->command) {
 	case CMD_RENAME:
-		success = gs_nameCheck(serverConnectionHandlerID, clientID);
+		success = gs_nameCheck(status, serverConnectionHandlerID, clientID);
 		break;
 	case CMD_FORCEMOVE:
-		success = gs_searchChannel(serverConnectionHandlerID, clientID);
+		success = gs_searchChannel(status, serverConnectionHandlerID, clientID);
 		break;
 	}
 
@@ -339,7 +349,7 @@ void gs_kickClient(uint64 serverConnectionHandlerID, anyID clientID) {
 	ts3Functions.requestClientKickFromChannel(serverConnectionHandlerID, clientID, "Gspeak Kick Command", NULL);
 }
 */
-bool gs_nameCheck(uint64 serverConnectionHandlerID, anyID clientID) {
+bool gs_nameCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientID) {
 	if (!gs_inChannel( status ))
 		return false;
 
@@ -358,7 +368,7 @@ bool gs_nameCheck(uint64 serverConnectionHandlerID, anyID clientID) {
 	return true;
 }
 
-void gs_setStatusName(uint64 serverConnectionHandlerID, anyID clientID, char* clientName = NULL ) {
+void gs_setStatusName(Status* status, uint64 serverConnectionHandlerID, anyID clientID, char* clientName = NULL ) {
 	if (!gs_isMe(serverConnectionHandlerID, clientID))
 		return;
 	if(clientName == NULL)
@@ -371,23 +381,26 @@ void gs_setStatusName(uint64 serverConnectionHandlerID, anyID clientID, char* cl
 void gs_clientThread(uint64 serverConnectionHandlerID, uint64 channelID) {
 	printf("[Gspeak] clientThread created\n");
 
-	//Open shared memory struct: clients
-	if (gs_openMapFile(&hMapFileO, clientName, sizeof(Clients)*PLAYER_MAX) == 1) {
-		printf("[Gspeak] openMapFile error\n");
-		return;
-	}
-	clients = (Clients*)MapViewOfFile(hMapFileO, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(Clients)*PLAYER_MAX);
-	if (clients == NULL) {
-		gs_criticalError(GetLastError());
-		printf("[Gspeak] could not view file\n");
-		CloseHandle(hMapFileO);
-		hMapFileO = NULL;
-		return;
-	}
-	clientThreadActive.store(true, std::memory_order_release);
-	printf("[Gspeak] has been loaded successfully\n");
-	ts3Functions.printMessageToCurrentTab("[Gspeak] has been loaded successfully!");
+	{
+		std::scoped_lock _lock{ clientsLock };
+		//Open shared memory struct: clients
+		if (gs_openMapFile(&hMapFileO, clientName, sizeof(Clients) * PLAYER_MAX) == 1) {
+			printf("[Gspeak] openMapFile error\n");
+			return;
+		}
+		clients = (Clients*)MapViewOfFile(hMapFileO, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(Clients) * PLAYER_MAX);
+		if (clients == NULL) {
+			gs_criticalError(GetLastError());
+			printf("[Gspeak] could not view file\n");
+			CloseHandle(hMapFileO);
+			hMapFileO = NULL;
+			return;
+		}
 
+		clientThreadActive.store(true, std::memory_order_release);
+		printf("[Gspeak] has been loaded successfully\n");
+		ts3Functions.printMessageToCurrentTab("[Gspeak] has been loaded successfully!");
+	}
 
 	TS3_VECTOR zero = { 0.0f, 0.0f, 0.0f };
 	TS3_VECTOR forward;
@@ -395,30 +408,38 @@ void gs_clientThread(uint64 serverConnectionHandlerID, uint64 channelID) {
 
 	anyID clientID;
 	ts3Functions.getClientID(serverConnectionHandlerID, &clientID);
-	gs_setStatusName(serverConnectionHandlerID, clientID);
+	{
+		std::scoped_lock _lock{ statusLock };
+		gs_setStatusName(status, serverConnectionHandlerID, clientID);
+	}
 
 	while (!clientThreadBreak.load(std::memory_order_acquire)) {
-		ts3Functions.getClientID(serverConnectionHandlerID, &clientID);
-		if (clientID != status->clientID) {
-			status->clientID = clientID;
+		{
+			std::scoped_lock _lock{ statusLock, clientsLock };
+
+			ts3Functions.getClientID(serverConnectionHandlerID, &clientID);
+			if (clientID != status->clientID) {
+				status->clientID = clientID;
+			}
+			gs_cmdCheck(status, serverConnectionHandlerID, clientID);
+
+			forward.x = status->forward[0];
+			forward.y = status->forward[1];
+			forward.z = status->forward[2];
+			upward.x = status->upward[0];
+			upward.y = status->upward[1];
+			upward.z = status->upward[2];
+			ts3Functions.systemset3DListenerAttributes(serverConnectionHandlerID, &zero, &forward, &upward);
+
+			gs_scanClients(status, clients, serverConnectionHandlerID);
 		}
-		gs_cmdCheck(serverConnectionHandlerID, clientID);
-
-		forward.x = status->forward[0];
-		forward.y = status->forward[1];
-		forward.z = status->forward[2];
-		upward.x = status->upward[0];
-		upward.y = status->upward[1];
-		upward.z = status->upward[2];
-		ts3Functions.systemset3DListenerAttributes(serverConnectionHandlerID, &zero, &forward, &upward);
-
-		gs_scanClients(serverConnectionHandlerID);
 
 		this_thread::sleep_for(chrono::milliseconds(SCAN_SPEED));
 	}	
 
-	clientThreadActive.store(true, std::memory_order_release);
+	clientThreadActive.store(false, std::memory_order_release);
 
+	std::scoped_lock _lock{ clientsLock };
 	UnmapViewOfFile(clients);
 	CloseHandle(hMapFileO);
 	hMapFileO = NULL;
@@ -438,7 +459,7 @@ void gs_statusThread() {
 			uint64 serverID = ts3Functions.getCurrentServerConnectionHandlerID();
 			anyID clientID;
 			if (ts3Functions.getClientID(serverID, &clientID) == ERROR_ok) {
-				gs_cmdCheck(serverID, clientID);
+				gs_cmdCheck(status, serverID, clientID);
 			}
 		}
 
@@ -448,7 +469,7 @@ void gs_statusThread() {
 	printf("[Gspeak] statusThread destroyed\n");
 }
 
-int gs_findClient(anyID clientID) {
+int gs_findClient(Clients* clients, anyID clientID) {
 	for (int i = 0; clients[i].clientID != 0 && i < PLAYER_MAX; i++) {
 		if (clients[i].clientID == clientID) return i;
 	}
@@ -456,7 +477,8 @@ int gs_findClient(anyID clientID) {
 }
 
 void ts3plugin_onClientDisplayNameChanged(uint64 serverConnectionHandlerID, anyID clientID, const char* displayName, const char* uniqueClientIdentifier) {
-	gs_setStatusName(serverConnectionHandlerID, clientID, (char*)displayName);
+	std::scoped_lock _lock{ statusLock };
+	gs_setStatusName(status, serverConnectionHandlerID, clientID, (char*)displayName);
 }
 
 void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, const char* moveMessage) {
@@ -485,13 +507,16 @@ bool gs_isMe(uint64 serverConnectionHandlerID, anyID clientID) {
 }
 
 void ts3plugin_onTalkStatusChangeEvent(uint64 serverConnectionHandlerID, int talkStatus, int isReceivedWhisper, anyID clientID) {
+	std::scoped_lock _lock{ clientsLock, statusLock };
+
 	if (!clientThreadActive.load(std::memory_order_acquire)) return;
+
 	if (gs_isMe(serverConnectionHandlerID, clientID)) {
 		if (talkStatus == STATUS_TALKING) status->talking = true;
 		else status->talking = false;
 	}
 	else {
-		int it = gs_findClient(clientID);
+		int it = gs_findClient(clients, clientID);
 		if (it > -1) {
 			if (talkStatus != STATUS_TALKING) clients[it].talking = false;
 		}
@@ -504,12 +529,15 @@ void ts3plugin_onCustom3dRolloffCalculationClientEvent(uint64 serverConnectionHa
 }
 
 void ts3plugin_onEditPostProcessVoiceDataEvent(uint64 serverConnectionHandlerID, anyID clientID, short* samples, int sampleCount, int channels, const unsigned int* channelSpeakerArray, unsigned int* channelFillMask) {
+	std::scoped_lock _lock{ clientsLock, statusLock };
+	
 	if (!clientThreadActive.load(std::memory_order_acquire)) return;
-	int it = gs_findClient(clientID);
+
+	int it = gs_findClient(clients, clientID);
 
 	clients[it].volume_ts = 0;
 
-	bool alwaysHear = gs_alwaysHearClient(serverConnectionHandlerID, clientID);
+	bool alwaysHear = gs_alwaysHearClient(status, serverConnectionHandlerID, clientID);
 
 	//If a client was found in array
 	if (it > -1) {

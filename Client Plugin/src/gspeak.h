@@ -28,7 +28,7 @@ extern "C" {
 
 	void gs_initClients(uint64 serverConnectionHandlerID, uint64 channelID);
 	void gs_initStatus();
-	void gs_setStatusName(uint64 serverConnectionHandlerID, anyID clientID, char* clientName);
+	void gs_setStatusName(Status* status, uint64 serverConnectionHandlerID, anyID clientID, char* clientName);
 	void gs_shutClients();
 	void gs_shutStatus(); 
 	void gs_setIdle();
@@ -37,15 +37,15 @@ extern "C" {
 	bool gs_isMe(uint64 serverConnectionHandlerID, anyID clientID);
 	void gs_criticalError(int errorCode);
 	int gs_openMapFile(HANDLE *hMapFile, TCHAR *name, unsigned int buf_size);
-	bool gs_searchChannel(uint64 serverConnectionHandlerID, anyID clientID);
+	bool gs_searchChannel(Status* status, uint64 serverConnectionHandlerID, anyID clientID);
 	void gs_clientMoved(uint64 serverConnectionHandlerID, anyID clientID, uint64 channelID);
 	bool gs_isChannel(uint64 serverConnectionHandlerID, uint64 channelID);
-	void gs_scanClients(uint64 serverConnectionHandlerID);
+	void gs_scanClients(Status* status, Clients* clients, uint64 serverConnectionHandlerID);
 	void gs_clientThread(uint64 serverConnectionHandlerID, uint64 channelID);
 	void gs_statusThread();
-	void gs_cmdCheck(uint64 serverConnectionHandlerID, anyID clientID);
-	bool gs_nameCheck(uint64 serverConnectionHandlerID, anyID clientID);
-	int gs_findClient(anyID clientID);
+	void gs_cmdCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientID);
+	bool gs_nameCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientID);
+	int gs_findClient(Clients* clients, anyID clientID);
 
 	PLUGINS_EXPORTDLL void ts3plugin_onClientMoveEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, const char* moveMessage); 
 	PLUGINS_EXPORTDLL void ts3plugin_onClientMoveMovedEvent(uint64 serverConnectionHandlerID, anyID clientID, uint64 oldChannelID, uint64 newChannelID, int visibility, anyID moverID, const char* moverName, const char* moverUniqueIdentifier, const char* moveMessage);
