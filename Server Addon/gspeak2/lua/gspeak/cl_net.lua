@@ -39,7 +39,7 @@ net.Receive("gspeak_ply_broadcast", function ( len )
 		print("[GSpeak] Player "..ply:Nick().." set broadcasting to "..(value and "true" or "false"))
 		ply.broadcasting = value
 		local tsid = gspeak:get_tsid(ply)
-		if tsid ~= -1 then
+		if tsid ~= -1 and tslib.setClientBroadcasting then
 			tslib.setClientBroadcasting(tsid, value)
 		end
 	end
