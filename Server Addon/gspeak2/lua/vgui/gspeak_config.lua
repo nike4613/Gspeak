@@ -511,7 +511,7 @@ local function DrawContent(panel, active)
 		DSlider:SetValue( gspeak.settings.def_mode )
 		DSlider.Think = gui_think_slider
 
-		yPos = yPos + diff
+		yPos = yPos + diff - 20
 		local DLabel = vgui.Create( "DLabel", DermaActive )
 		DLabel:SetPos( xPos, yPos )
 		DLabel:SetSize( 125, 25 )
