@@ -17,6 +17,7 @@ DisableProgramGroupPage=yes
 LicenseFile=LICENSE
 ; Remove the following line to run in administrative install mode (install for all users.)
 PrivilegesRequired=lowest
+OutputDir=
 OutputBaseFilename=installer
 Compression=lzma
 SolidCompression=yes
@@ -30,9 +31,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 Source: "find_gmod_install.ps1"; DestDir: "this is meaningless"; Flags: dontcopy noencryption
 Source: "unbom.ps1"; DestDir: "this is meaningless"; Flags: dontcopy noencryption
-Source: "Client Plugin\Release\Win32\TSlib\gmcl_tslib_win32.dll"; DestDir: "{app}"; Flags:      
-Source: "Client Plugin\Release\Win32\Gspeak\gspeak_win32.dll"; DestDir: "{autoappdata}\TS3Client\plugins"; Flags: 
-Source: "Client Plugin\Release\x64\Gspeak\gspeak_win64.dll"; DestDir: "{autoappdata}\TS3Client\plugins"; Flags: 
+Source: "Client Plugin\Release\Win32\TSlib\gmcl_tslib_win32.dll"; DestDir: "{app}"; Flags:
+Source: "Client Plugin\Release\x64\TSlib\gmcl_tslib_win64.dll"; DestDir: "{app}"; Flags:      
+Source: "build\gspeak.ts3_plugin"; DestDir: "{tmp}"; Flags:
+
+[Run]
+Filename: "{tmp}\gspeak.ts3_plugin"; Flags: shellexec waituntilterminated  
 
 [Code]
 function GetGmodInstall(default: String): String;
