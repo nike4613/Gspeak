@@ -128,6 +128,9 @@ local function CheckboxElem(pane, label, setting, table, multiCol)
 	DCheckBox:SetValue( get_nested(table, setting) )
 	DCheckBox.OnChange = function( panel )
 		set_nested(table, setting, panel:GetChecked())
+		if table == gspeak.settings then
+			send_setting( { name = setting, value = value }, Panel.client )
+		end
 	end
 	local DLabel = vgui.Create( "DLabel", pane.parent )
 	DLabel:SetPos( pane.xp+25, pane.yp )
