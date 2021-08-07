@@ -153,12 +153,12 @@ function gspeak:ChangeSetting(setting, table, name, value, i, original_table)
 	if i < #setting then gspeak:ChangeSetting(setting, table[setting[i]], name, value, i+1, original_table) return end
 	table[setting[i]] = value
 
-	if !gspeak:UpdateQuery(value, name) then return end
+	if !gspeak:UpdateQuery(original_table[setting[1]], setting[1]) then return end
 	gspeak:ConsolePrint("Changed "..name.." to "..tostring(value), Color(0,255,0))
 
 	if SERVER then
 		net.Start("gspeak_server_settings")
-			net.WriteTable( { name = name, value = value } )
+			net.WriteTable( { name = setting[1], value = original_table[setting[1]] } )
 		net.Broadcast()
 	end
 end
