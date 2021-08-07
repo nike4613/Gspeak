@@ -613,7 +613,7 @@ local function DrawContent(panel, active)
 		EndRow(pane)
 
 		CheckboxElem(pane, "Should all hear commander?", "hear_channel_commander", gspeak.settings, true)
-		CheckboxElem(pane, "Use GSpeak??", "enabled", gspeak.settings, true)
+		CheckboxElem(pane, "Use GSpeak?", "enabled", gspeak.settings, true)
 		EndRow(pane)
 
 		local DLabel = vgui.Create( "DLabel", DermaActive )

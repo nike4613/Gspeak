@@ -154,6 +154,7 @@ hook.Add( "RenderScreenspaceEffects", "gspeak_icon", function()
 end)
 
 hook.Add( "HUDPaint", "gspeak_hud", function()
+	if !gspeak.settings.enabled then return end
 	gspeak:DrawStatus()
 	if gspeak.cl.tmm.actice then gspeak:DrawTalkMenu() end
 	gspeak:DrawHUD()
