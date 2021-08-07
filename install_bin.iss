@@ -11,7 +11,7 @@ AppId={{EDC03466-5420-46C4-AED5-8151E57778EE}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
-DefaultDirName={code:GetGmodInstall|C:\Program Files (x86)\Steam\steamapps\common\GarrysMod\}
+DefaultDirName={code:GetGmodInstall|!GMod Installation could not be found! Select your GMod installation.}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile=LICENSE
@@ -39,7 +39,7 @@ Source: "build\gspeak.ts3_plugin"; DestDir: "{tmp}"; Flags:
 [Run]
 Filename: "{tmp}\gspeak.ts3_plugin"; Flags: shellexec waituntilterminated  
 
-[Code]
+[Code]     
 function GetGmodInstall(default: String): String;
 var
   pwsh: String;
@@ -47,16 +47,17 @@ var
   R: Boolean;
   I: Integer;
 begin
+  MsgBox('If you have GSpeak already installed and TeamSpeak is running, first disable it in TeamSpeak, then complete this installation, then re-enable it.', mbInformation, MB_OK);
   ExtractTemporaryFile('find_gmod_install.ps1');
   ExtractTemporaryFile('unbom.ps1');
   pwsh := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
-  R := Exec(pwsh, ExpandConstant('-nologo -noprofile -command ".\find_gmod_install.ps1 > .\output.txt"'),
+  R := Exec(pwsh, ExpandConstant('-nologo -noprofile -ExecutionPolicy Bypass -command ".\find_gmod_install.ps1 > .\output.txt"'),
     ExpandConstant('{tmp}'), SW_HIDE, ewWaitUntilTerminated, I);
   if (not R) then begin
     Result := default;
     exit;
   end;
-  R := Exec(pwsh, ExpandConstant('-nologo -noprofile -command ".\unbom.ps1 .\output.txt"'),
+  R := Exec(pwsh, ExpandConstant('-nologo -noprofile -ExecutionPolicy Bypass -command ".\unbom.ps1 .\output.txt"'),
     ExpandConstant('{tmp}'), SW_HIDE, ewWaitUntilTerminated, I);
   if (not R) then begin
     Result := default;
