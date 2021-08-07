@@ -11,19 +11,20 @@ AppId={{EDC03466-5420-46C4-AED5-8151E57778EE}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
-DefaultDirName={code:GetGmodInstall|C:\Program Files (x86)\Steam\steamapps\common\GarrysMod\}garrysmod\lua\bin
+DefaultDirName={code:GetGmodInstall|C:\Program Files (x86)\Steam\steamapps\common\GarrysMod\}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile=LICENSE
 ; Remove the following line to run in administrative install mode (install for all users.)
 PrivilegesRequired=lowest
-OutputDir=
+OutputDir=build
 OutputBaseFilename=installer
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 CreateUninstallRegKey=no
 Uninstallable=no
+DirExistsWarning=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -31,8 +32,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 Source: "find_gmod_install.ps1"; DestDir: "this is meaningless"; Flags: dontcopy noencryption
 Source: "unbom.ps1"; DestDir: "this is meaningless"; Flags: dontcopy noencryption
-Source: "Client Plugin\Release\Win32\TSlib\gmcl_tslib_win32.dll"; DestDir: "{app}"; Flags:
-Source: "Client Plugin\Release\x64\TSlib\gmcl_tslib_win64.dll"; DestDir: "{app}"; Flags:      
+Source: "Client Plugin\Release\Win32\TSlib\gmcl_tslib_win32.dll"; DestDir: "{app}\garrysmod\lua\bin"; Flags:
+Source: "Client Plugin\Release\x64\TSlib\gmcl_tslib_win64.dll"; DestDir: "{app}\garrysmod\lua\bin"; Flags:      
 Source: "build\gspeak.ts3_plugin"; DestDir: "{tmp}"; Flags:
 
 [Run]

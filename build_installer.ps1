@@ -40,7 +40,7 @@ MSBuild ".\Client Plugin\Gspeak.sln" -p:Configuration=Release -p:Platform=x64
 if (-not (Test-Path .\build\tsplug -PathType Container)) {
   New-Item .\build\tsplug -ItemType Container
 } else {
-  Remove-Item -Recursive .\build\tsplug\*
+  Remove-Item -Recurse .\build\tsplug\*
 }
 
 New-Item .\build\tsplug\plugins -ItemType Container
