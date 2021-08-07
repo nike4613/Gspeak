@@ -167,6 +167,11 @@ hook.Add( "OnPlayerChat", "gspeak_cmd_hook", function( ply, text )
 end)
 
 hook.Add("Think", "Gspeak", function()
+	if !gspeak.settings.enabled then
+		gspeak.cl.TS.connected = false
+		return
+	end
+
 	gspeak:UpdateLoading()
 	gspeak.clientPos = LocalPlayer():GetPos() + gspeak:get_offset(LocalPlayer())
 	if gspeak.cl.failed then return end

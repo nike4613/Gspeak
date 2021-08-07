@@ -18,6 +18,7 @@ gspeak = { version = 2600 };
 
 --Setting Default variables
 gspeak.settings = {
+	enabled = true,
 	distances = {
 		modes = {
 			{	name = "Whisper",	range = 150, icon = "gspeak/gspeak_whisper.png", icon_ui = "gspeak/gspeak_whisper_ui.png" },

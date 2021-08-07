@@ -549,7 +549,6 @@ local function DrawContent(panel, active)
 
 		CheckboxElem(pane, "Display players nick instead of name", "nickname", gspeak.settings)
 	elseif active == 5 then
-		diff = 40
 		pane.ydist = 40
 
 		local DLabel = vgui.Create( "DLabel", DermaActive )
@@ -614,6 +613,7 @@ local function DrawContent(panel, active)
 		EndRow(pane)
 
 		CheckboxElem(pane, "Should all hear commander?", "hear_channel_commander", gspeak.settings, true)
+		CheckboxElem(pane, "Use GSpeak??", "enabled", gspeak.settings, true)
 		EndRow(pane)
 
 		local DLabel = vgui.Create( "DLabel", DermaActive )
