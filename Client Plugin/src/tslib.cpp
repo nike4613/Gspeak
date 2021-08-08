@@ -211,7 +211,7 @@ int gs_sendSettings(lua_State* state) {
 
 int gs_setHearUnknown(lua_State* state) {
 	LUA->CheckType(1, GarrysMod::Lua::Type::BOOL); bool hear_unknown = LUA->GetBool(1);
-	if (status == nullptr) return;
+	if (status == nullptr) return 0;
 
 	status->hear_unknown_clients = hear_unknown;
 

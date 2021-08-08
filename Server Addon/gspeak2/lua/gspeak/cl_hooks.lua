@@ -202,7 +202,7 @@ hook.Add("Think", "Gspeak", function()
 	local client_alive = gspeak:player_alive(LocalPlayer())
 
 	if gspeak.settings.dead_chat and !client_alive and !gspeak.cl.dead_muted then
-		tslib.setHearUnknown(hear_unknown_clients)
+		tslib.setHearUnknown(hear_unknown_clients or false)
 	else
 		tslib.setHearUnknown(false)
 	end
