@@ -355,6 +355,12 @@ int gs_setEntAudible(lua_State* state) {
 	return 0;
 }
 
+int gs_fixAudio(lua_State* state) {
+	LUA->CheckType(1, GarrysMod::Lua::Type::FUNCTION); LUA->Push(1); int callback = LUA->ReferenceCreate();
+	gs_pushCMD(state, (int)CMD_FIX3D, callback);
+	return 0;
+}
+
 int gs_sendPos(lua_State* state)
 {
 	LUA->CheckType(1, GarrysMod::Lua::Type::NUMBER); int clientID = (int)LUA->GetNumber(1);
@@ -531,7 +537,7 @@ int gs_getAllID(lua_State* state) {
 	M(getArray) M(talkCheck) M(getGspeakVersion) \
 	M(setClientBroadcasting) M(getAllID) \
 	M(setClientAudible) M(setEntAudible) \
-	M(setHearUnknown)
+	M(setHearUnknown) M(fixAudio)
 	/*M(getTsLibVersion)  M(getVolumeOf) */ 
 
 //*************************************

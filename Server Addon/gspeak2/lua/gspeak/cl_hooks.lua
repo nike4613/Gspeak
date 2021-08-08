@@ -169,6 +169,12 @@ end)
 
 hook.Add("Think", "Gspeak", function()
 	if !gspeak.settings.enabled then
+		if gspeak.cl.TS.connected then
+			gspeak:fix_audio(function()
+				gspeak:ConsolePrint(gspeak.cl.color.yellow, "3D audio fixed")
+			end)
+		end
+
 		gspeak.cl.TS.connected = false
 		return
 	end

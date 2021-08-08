@@ -323,6 +323,10 @@ function gspeak:player_alive(ply)
 	return true
 end
 
+function gspeak:fix_audio(callback)
+	tslib.fixAudio(callback or function() end)
+end
+
 //Thendon du hast hioer einfach aufgehört lol
 //wird vom LocalPLayer getriggert?!
 //Edit: Glaube das ist ein cpp test (gs_delPos)

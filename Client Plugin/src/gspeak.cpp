@@ -326,6 +326,20 @@ void gs_scanClients(Status const* status, Client const* clients, uint64 serverCo
 	}
 }
 
+bool gs_fix3d(Status const* status, uint64 serverConnectionHandlerID, anyID clientID) {
+	uint64 channel;
+	if (!ts3Functions.getChannelOfClient(serverConnectionHandlerID, clientID, &channel))
+		return false;
+	anyID* users;
+	if (!ts3Functions.getChannelClientList(serverConnectionHandlerID, channel, &users))
+		return false;
+
+	TS3_VECTOR zero{ 0.0, 0.0, 0.0 };
+	for (auto user = users; *user != 0; user++) {
+		ts3Functions.channelset3DAttributes(serverConnectionHandlerID, *user, &zero);
+	}
+}
+
 std::mutex cmdLock;
 
 void gs_cmdCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientID) {
@@ -341,6 +355,9 @@ void gs_cmdCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientI
 		break;
 	case CMD_FORCEMOVE:
 		success = gs_searchChannel(status, serverConnectionHandlerID, clientID);
+		break;
+	case CMD_FIX3D:
+		success = gs_fix3d(status, serverConnectionHandlerID, clientID);
 		break;
 	}
 
@@ -533,6 +550,10 @@ void ts3plugin_onTalkStatusChangeEvent(uint64 serverConnectionHandlerID, int tal
 
 void ts3plugin_onCustom3dRolloffCalculationClientEvent(uint64 serverConnectionHandlerID, anyID clientID, float distance, float* volume) {
 	if (!clientThreadActive.load(std::memory_order_acquire)) return;
+	{
+		std::scoped_lock _lock{ statusLock };
+		if (!status->enabled) return;
+	}
 	*volume = 1.0f;
 }
 

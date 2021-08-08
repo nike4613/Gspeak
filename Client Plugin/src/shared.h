@@ -10,6 +10,7 @@
 #define CMD_FORCEMOVE 2
 #define CMD_KICK 3
 #define CMD_BAN 4
+#define CMD_FIX3D 5
 #define CMD_BUF 16
 
 struct Client {
