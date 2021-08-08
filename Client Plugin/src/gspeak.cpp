@@ -326,7 +326,11 @@ void gs_scanClients(Status const* status, Client const* clients, uint64 serverCo
 	}
 }
 
+std::mutex cmdLock;
+
 void gs_cmdCheck(Status* status, uint64 serverConnectionHandlerID, anyID clientID) {
+	std::scoped_lock _lock{ cmdLock };
+
 	if (status->command <= 0)
 		return;
 
@@ -536,6 +540,7 @@ void ts3plugin_onEditPostProcessVoiceDataEvent(uint64 serverConnectionHandlerID,
 	std::scoped_lock _lock{ clientsLock, statusLock };
 	
 	if (!clientThreadActive.load(std::memory_order_acquire)) return;
+	if (!status->enabled) return;
 
 	int it = gs_findClient(clients, clientID);
 

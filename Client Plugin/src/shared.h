@@ -40,6 +40,7 @@ struct Status {
 	int command;
 	bool hear_channel_commander;
 	bool hear_unknown_clients;
+	bool enabled;
 };
 
 bool gs_inChannel(Status const* status);

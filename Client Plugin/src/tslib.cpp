@@ -191,12 +191,14 @@ int gs_sendSettings(lua_State* state) {
 	LUA->CheckType(5, GarrysMod::Lua::Type::NUMBER); float radio_volume_noise = (float)LUA->GetNumber(5);
 	LUA->CheckType(6, GarrysMod::Lua::Type::BOOL); bool hear_channel_commander = LUA->GetBool(6);
 	LUA->CheckType(7, GarrysMod::Lua::Type::BOOL); bool hear_unknown = LUA->GetBool(7);
+	LUA->CheckType(8, GarrysMod::Lua::Type::BOOL); bool enabled = LUA->GetBool(8);
 
 	if (strlen(password) >= PASS_BUF) {
 		LUA->PushBool(false);
 		return 1;
 	}
 
+	status->enabled = enabled;
 	strcpy_s(status->password, PASS_BUF*sizeof(char), password);
 	status->radio_downsampler = radio_downsampler > 0 ? radio_downsampler : 1;
 	status->radio_distortion = radio_distortion;
