@@ -127,7 +127,7 @@ function gspeak:updateName( name )
 	end )
 end
 
-function gspeak:checkConnection()
+function gspeak:tslibTick()
 	if gspeak.cl.TS.connected then
 		gspeak.cl.updateTick = gspeak.cl.updateTick + 1
 		--update every 100th tick
@@ -135,7 +135,11 @@ function gspeak:checkConnection()
 			gspeak.cl.updateTick = 0
 			tslib.update()
 		end
+	end
+end
 
+function gspeak:checkConnection()
+	if gspeak.cl.TS.connected then
 		if gspeak.settings.def_initialForceMove and !gspeak.cl.movedInitially then
 			gspeak.cl.movedInitially = true
 			gspeak:forceMoveLoop()

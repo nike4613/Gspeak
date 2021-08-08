@@ -167,17 +167,25 @@ hook.Add( "OnPlayerChat", "gspeak_cmd_hook", function( ply, text )
 	end
 end)
 
+local lastEnabled = gspeak.settings.enabled
 hook.Add("Think", "Gspeak", function()
+
+	-- always tick tslib
+	gspeak:tslibTick()
+
 	if !gspeak.settings.enabled then
-		if gspeak.cl.TS.connected then
+		if lastEnabled then
 			gspeak:fix_audio(function()
 				gspeak:ConsolePrint(gspeak.cl.color.yellow, "3D audio fixed")
 			end)
 		end
+		lastEnabled = false
 
 		gspeak.cl.TS.connected = false
 		return
 	end
+
+	lastEnabled = true
 
 	gspeak:UpdateLoading()
 	gspeak.clientPos = LocalPlayer():GetPos() + gspeak:get_offset(LocalPlayer())
