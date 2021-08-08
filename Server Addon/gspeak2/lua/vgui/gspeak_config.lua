@@ -603,6 +603,9 @@ local function DrawContent(panel, active)
 		end
 		EndRow(pane, 50)
 		
+		CheckboxElem(pane, "Use GSpeak?", "enabled", gspeak.settings, true)
+		EndRow(pane)
+		
 		CheckboxElem(pane, "Override Default Voice", "overrideV", gspeak.settings, true)
 		CheckboxElem(pane, "Override Default Chat", "overrideC", gspeak.settings, true)
 		EndRow(pane)
@@ -616,7 +619,7 @@ local function DrawContent(panel, active)
 		EndRow(pane)
 
 		CheckboxElem(pane, "Should all hear commander?", "hear_channel_commander", gspeak.settings, true)
-		CheckboxElem(pane, "Use GSpeak?", "enabled", gspeak.settings, true)
+		CheckboxElem(pane, "Should dead hear non-GSpeak clients?", "hear_unknown_clients", gspeak.settings, true)
 		EndRow(pane)
 
 		local DLabel = vgui.Create( "DLabel", DermaActive )
