@@ -9,7 +9,6 @@ function gspeak:send_settings()
 													gspeak.settings.radio.volume,
 													gspeak.settings.radio.noise,
 												  gspeak.settings.hear_channel_commander,
-													gspeak.settings.hear_unknown_clients,
 													gspeak.settings.enabled ) then
 		gspeak:chat_text("channel Password too long!", true)
 	end

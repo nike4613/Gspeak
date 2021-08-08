@@ -35,7 +35,6 @@ struct Status {
 	float radio_volume;
 	float radio_volume_noise;
 	char password[PASS_BUF];
-	bool status; 
 	bool talking;
 	int command;
 	bool hear_channel_commander;

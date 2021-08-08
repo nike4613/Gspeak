@@ -190,8 +190,7 @@ int gs_sendSettings(lua_State* state) {
 	LUA->CheckType(4, GarrysMod::Lua::Type::NUMBER); float radio_volume = (float)LUA->GetNumber(4);
 	LUA->CheckType(5, GarrysMod::Lua::Type::NUMBER); float radio_volume_noise = (float)LUA->GetNumber(5);
 	LUA->CheckType(6, GarrysMod::Lua::Type::BOOL); bool hear_channel_commander = LUA->GetBool(6);
-	LUA->CheckType(7, GarrysMod::Lua::Type::BOOL); bool hear_unknown = LUA->GetBool(7);
-	LUA->CheckType(8, GarrysMod::Lua::Type::BOOL); bool enabled = LUA->GetBool(8);
+	LUA->CheckType(7, GarrysMod::Lua::Type::BOOL); bool enabled = LUA->GetBool(7);
 
 	if (strlen(password) >= PASS_BUF || status == nullptr) {
 		LUA->PushBool(false);
@@ -205,10 +204,18 @@ int gs_sendSettings(lua_State* state) {
 	status->radio_volume = radio_volume;
 	status->radio_volume_noise = radio_volume_noise;
 	status->hear_channel_commander = hear_channel_commander;
-	status->hear_unknown_clients = hear_unknown;
 
 	LUA->PushBool(true);
 	return 1;
+}
+
+int gs_setHearUnknown(lua_State* state) {
+	LUA->CheckType(1, GarrysMod::Lua::Type::BOOL); bool hear_unknown = LUA->GetBool(1);
+	if (status == nullptr) return;
+
+	status->hear_unknown_clients = hear_unknown;
+
+	return 0;
 }
 
 void gs_pushCMD(lua_State* state, int key, int callback) {
@@ -523,7 +530,8 @@ int gs_getAllID(lua_State* state) {
 	M(delAll) M(getTsID) M(getInChannel) \
 	M(getArray) M(talkCheck) M(getGspeakVersion) \
 	M(setClientBroadcasting) M(getAllID) \
-	M(setClientAudible) M(setEntAudible)
+	M(setClientAudible) M(setEntAudible) \
+	M(setHearUnknown)
 	/*M(getTsLibVersion)  M(getVolumeOf) */ 
 
 //*************************************
