@@ -39,7 +39,7 @@ static struct TS3Functions ts3Functions;
 #define CHANNELINFO_BUFSIZE 512
 #define RETURNCODE_BUFSIZE 128
 
-#define GSPEAK_VERSION 2600
+#define GSPEAK_VERSION 2700
 #define SCAN_SPEED 100
 #define VOLUME_MAX 1800
 #define SHORT_SIZE 32767
@@ -543,74 +543,72 @@ void ts3plugin_onEditPostProcessVoiceDataEvent(uint64 serverConnectionHandlerID,
 
 	bool alwaysHear = gs_canAlwaysHearClient(status, serverConnectionHandlerID, clientID);
 
-	//If a client was found in array
-	if (it > -1) {
+	if (alwaysHear) return;
+
+	if (it < 0) { // we don't know about the client
+		// if we're supposed to *hear* those unknown clients, then exit early
+		if (status->hear_unknown_clients) return;
+		// otherwise, clear their samples so they're inaudible
+		for (int i = 0; i < sampleCount; i++) {
+			short sample_it = i * channels;
+			for (int j = 0; j < channels; j++) {
+				samples[sample_it + j] = 0;
+			}
+		}
+	} else {
+		// otherwise, we know about the client
 		if (clients[it].talking != true) clients[it].talking = true;
 
-		alwaysHear = alwaysHear || clients[it].broadcasting;
+		// if the client is broadcasting, then we don't want to do any more work
+		if (clients[it].broadcasting) return;
 
-		if (!alwaysHear) {
-			//If volume between 0 and 1
-			if (clients[it].volume_gm > 0 && clients[it].volume_gm <= 1) {
-				float sum = 0;
-				for (int i = 0; i < sampleCount; i++) {
-					unsigned short sample_it = i * channels;
-					//Average volume detection for mouth move animation
-					if (samples[sample_it] > VOLUME_MAX) sum += VOLUME_MAX;
-					else sum += abs(samples[sample_it]);
+		//If volume is in a reasonable range, and the client is supposed to be heard
+		if (clients[it].volume_gm > 0 && clients[it].volume_gm <= 1 && clients[it].maybe_audible) {
+			float sum = 0;
+			for (int i = 0; i < sampleCount; i++) {
+				unsigned short sample_it = i * channels;
+				//Average volume detection for mouth move animation
+				if (samples[sample_it] > VOLUME_MAX) sum += VOLUME_MAX;
+				else sum += abs(samples[sample_it]);
 
-					if (clients[it].radio) {
-						if (i % status->radio_downsampler == 0) {
-							//Noise
-							float noise = (((float)rand() / RAND_MAX) * SHORT_SIZE * 2) - SHORT_SIZE;
-							for (int j = 0; j < channels; j++) {
-								//Distortion
-								short sample_new = static_cast<short>(
-									(samples[sample_it] > status->radio_distortion
-										? status->radio_distortion
-										: samples[sample_it] < status->radio_distortion * (-1)
-										? status->radio_distortion * (-1)
-										: samples[sample_it])
-									* status->radio_volume * clients[it].volume_gm);
-								short sample_noise = (short)(sample_new + noise * status->radio_volume_noise);
-								//Downsampling future samples
-								bool temp_bool = false;
-								for (int n = 0; n < status->radio_downsampler; n++) {
-									int temp_it = sample_it + j + n * channels;
-									if (temp_bool) {
-										samples[temp_it] = sample_noise;
-										temp_bool = false;
-									}
-									else {
-										samples[temp_it] = sample_new;
-										temp_bool = true;
-									}
+				if (clients[it].radio) {
+					if (i % status->radio_downsampler == 0) {
+						//Noise
+						float noise = (((float)rand() / RAND_MAX) * SHORT_SIZE * 2) - SHORT_SIZE;
+						for (int j = 0; j < channels; j++) {
+							//Distortion
+							short sample_new = static_cast<short>(
+								(samples[sample_it] > status->radio_distortion
+									? status->radio_distortion
+									: samples[sample_it] < status->radio_distortion * (-1)
+									? status->radio_distortion * (-1)
+									: samples[sample_it])
+								* status->radio_volume * clients[it].volume_gm);
+							short sample_noise = (short)(sample_new + noise * status->radio_volume_noise);
+							//Downsampling future samples
+							bool temp_bool = false;
+							for (int n = 0; n < status->radio_downsampler; n++) {
+								int temp_it = sample_it + j + n * channels;
+								if (temp_bool) {
+									samples[temp_it] = sample_noise;
+									temp_bool = false;
+								}
+								else {
+									samples[temp_it] = sample_new;
+									temp_bool = true;
 								}
 							}
 						}
 					}
-					else {
-						for (int j = 0; j < channels; j++) {
-							samples[sample_it + j] = (short)(samples[sample_it + j] * clients[it].volume_gm);
-						}
+				} else {
+					for (int j = 0; j < channels; j++) {
+						samples[sample_it + j] = (short)(samples[sample_it + j] * clients[it].volume_gm);
 					}
 				}
-				//Sending average volume to Gmod
-				clients[it].volume_ts = sum / sampleCount / VOLUME_MAX;
-				return;
 			}
-		}
-	}
-
-	if (alwaysHear) {
-		// if we are supposed to always hear, then don't clear the samples
-		return; 
-	}
-
-	for (int i = 0; i < sampleCount; i++) {
-		short sample_it = i * channels;
-		for (int j = 0; j < channels; j++) {
-			samples[sample_it + j] = 0;
+			//Sending average volume to Gmod
+			clients[it].volume_ts = sum / sampleCount / VOLUME_MAX;
+			return;
 		}
 	}
 }

@@ -20,6 +20,7 @@ struct Client {
 	bool radio;
 	bool talking;
 	bool broadcasting;
+	bool maybe_audible;
 };
 
 struct Status {
@@ -38,6 +39,7 @@ struct Status {
 	bool talking;
 	int command;
 	bool hear_channel_commander;
+	bool hear_unknown_clients;
 };
 
 bool gs_inChannel(Status const* status);

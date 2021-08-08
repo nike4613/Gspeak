@@ -35,8 +35,8 @@ gspeak.cl = {
 	},
 	TS = {
 		version = 0,
-		req = 2600,
-		max = 2700,
+		req = 2700,
+		max = 2800,
 		connected = false,
 		inChannel = false,
 		failed = false

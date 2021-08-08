@@ -5,7 +5,7 @@
 */
 
 #define GMMODULE
-#define TSLIB_VERSION 2650
+#define TSLIB_VERSION 2700
 
 #include <GarrysMod/Lua/Interface.h>
 #include <Windows.h>
@@ -190,6 +190,7 @@ int gs_sendSettings(lua_State* state) {
 	LUA->CheckType(4, GarrysMod::Lua::Type::NUMBER); float radio_volume = (float)LUA->GetNumber(4);
 	LUA->CheckType(5, GarrysMod::Lua::Type::NUMBER); float radio_volume_noise = (float)LUA->GetNumber(5);
 	LUA->CheckType(6, GarrysMod::Lua::Type::BOOL); bool hear_channel_commander = LUA->GetBool(6);
+	LUA->CheckType(7, GarrysMod::Lua::Type::BOOL); bool hear_unknown = LUA->GetBool(7);
 
 	if (strlen(password) >= PASS_BUF) {
 		LUA->PushBool(false);
@@ -202,6 +203,7 @@ int gs_sendSettings(lua_State* state) {
 	status->radio_volume = radio_volume;
 	status->radio_volume_noise = radio_volume_noise;
 	status->hear_channel_commander = hear_channel_commander;
+	status->hear_unknown_clients = hear_unknown;
 
 	LUA->PushBool(true);
 	return 1;
@@ -313,6 +315,35 @@ int gs_setClientBroadcasting(lua_State* state) {
 	return 1;
 }
 
+int gs_setClientAudible(lua_State* state) {
+	LUA->CheckType(1, GarrysMod::Lua::Type::NUMBER); int clientId = (int)LUA->GetNumber(1);
+	LUA->CheckType(2, GarrysMod::Lua::Type::BOOL); bool newVal = LUA->GetBool(2);
+
+	bool exist = false;
+	int i = gs_searchPlayer(state, clientId, &exist);
+
+	if (!exist) {
+		LUA->PushBool(false);
+		return 1;
+	}
+
+	clients[i].maybe_audible = newVal;
+	LUA->PushBool(true);
+	return 1;
+}
+
+int gs_setEntAudible(lua_State* state) {
+	LUA->CheckType(1, GarrysMod::Lua::Type::NUMBER); int entId = (int)LUA->GetNumber(1);
+	LUA->CheckType(2, GarrysMod::Lua::Type::BOOL); bool newVal = LUA->GetBool(2);
+
+	for (int i = 0; clients[i].clientID != 0 && i < PLAYER_MAX; i++) {
+		if (clients_local[i].entID == entId) {
+			clients[i].maybe_audible = newVal;
+			break;
+		}
+	}
+}
+
 int gs_sendPos(lua_State* state)
 {
 	LUA->CheckType(1, GarrysMod::Lua::Type::NUMBER); int clientID = (int)LUA->GetNumber(1);
@@ -346,6 +377,10 @@ int gs_sendPos(lua_State* state)
 				return 0;
 			}
 		//}
+	}
+	else {
+		// if the client didn't exist, default this to true
+		clients[i].maybe_audible = true;
 	}
 
 	//Add new data
@@ -483,7 +518,8 @@ int gs_getAllID(lua_State* state) {
 	M(update) M(sendClientPos) M(sendPos) M(delPos) \
 	M(delAll) M(getTsID) M(getInChannel) \
 	M(getArray) M(talkCheck) M(getGspeakVersion) \
-	M(setClientBroadcasting) M(getAllID)
+	M(setClientBroadcasting) M(getAllID) \
+	M(setClientAudible) M(setEntAudible)
 	/*M(getTsLibVersion)  M(getVolumeOf) */ 
 
 //*************************************

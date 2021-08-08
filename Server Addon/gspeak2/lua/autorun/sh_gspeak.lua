@@ -10,7 +10,7 @@
 //
 //************************************************************
 
-gspeak = { version = 2600 };
+gspeak = { version = 2700 };
 
 //************************************************************
 // Change these Variables ingame by entering !gspeak if possible
@@ -61,7 +61,8 @@ gspeak.settings = {
 	nickname = true,
 	def_initialForceMove = true,
 	updateName = false,
-	hear_channel_commander = true
+	hear_channel_commander = true,
+	hear_unknown_clients = false
 }
 
 gspeak.sounds = {
