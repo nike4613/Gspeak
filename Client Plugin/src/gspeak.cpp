@@ -96,7 +96,7 @@ const char* ts3plugin_name() {
 }
 
 const char* ts3plugin_version() {
-	return "2.6";
+	return "2.7";
 }
 
 int ts3plugin_apiVersion() {
