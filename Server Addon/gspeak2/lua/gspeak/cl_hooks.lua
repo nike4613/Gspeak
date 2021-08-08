@@ -168,6 +168,10 @@ hook.Add( "OnPlayerChat", "gspeak_cmd_hook", function( ply, text )
 end)
 
 hook.Add("Think", "Gspeak", function()
+
+	-- always tick tslib
+	gspeak:tslibTick()
+
 	if !gspeak.settings.enabled then
 		if gspeak.cl.TS.connected then
 			gspeak:fix_audio(function()
