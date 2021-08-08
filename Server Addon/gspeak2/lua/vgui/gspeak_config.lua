@@ -219,7 +219,7 @@ local function DrawContent(panel, active)
 	DImage:SetImage( "gspeak/gspeak_logo_new.png" )
 	DImage:SetImageColor(Color(255,255,255,40))
 
-	local pane = MakeSettingPane(25, 50, 50, DermaActive)
+	local pane = MakeSettingPane(25, 25, 50, DermaActive)
 
 	if active == 1 then
 		KeybindElem(pane, "Talkmode Key", "key", "(default - "..GetKeyString(gspeak.settings.def_key)..")")
