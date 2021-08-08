@@ -342,6 +342,8 @@ int gs_setEntAudible(lua_State* state) {
 			break;
 		}
 	}
+
+	return 0;
 }
 
 int gs_sendPos(lua_State* state)

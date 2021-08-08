@@ -29,8 +29,8 @@ gspeak.cl = {
 	tm_tab = 0,
 	tslib = {
 		version = 0,
-		req = 2500,
-		max = 2700,
+		req = 2700,
+		max = 2800,
 		wrongVersion = false
 	},
 	TS = {
