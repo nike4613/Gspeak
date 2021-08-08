@@ -181,7 +181,7 @@ hook.Add("Think", "Gspeak", function()
 		end
 		lastEnabled = false
 
-		gspeak.cl.TS.connected = false
+		--gspeak.cl.TS.connected = false
 		return
 	end
 
