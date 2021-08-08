@@ -193,7 +193,7 @@ int gs_sendSettings(lua_State* state) {
 	LUA->CheckType(7, GarrysMod::Lua::Type::BOOL); bool hear_unknown = LUA->GetBool(7);
 	LUA->CheckType(8, GarrysMod::Lua::Type::BOOL); bool enabled = LUA->GetBool(8);
 
-	if (strlen(password) >= PASS_BUF) {
+	if (strlen(password) >= PASS_BUF || status == nullptr) {
 		LUA->PushBool(false);
 		return 1;
 	}

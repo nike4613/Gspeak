@@ -130,7 +130,6 @@ local function CheckboxElem(pane, label, setting, table, multiCol)
 		set_nested(table, setting, panel:GetChecked())
 		if table == gspeak.settings then
 			send_setting( { name = setting, value = panel:GetChecked() } )
-			gspeak:send_settings() -- just in case something important changed
 		end
 	end
 	local DLabel = vgui.Create( "DLabel", pane.parent )
