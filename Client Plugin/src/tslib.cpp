@@ -209,15 +209,6 @@ int gs_sendSettings(lua_State* state) {
 	return 1;
 }
 
-int gs_setHearUnknown(lua_State* state) {
-	LUA->CheckType(1, GarrysMod::Lua::Type::BOOL); bool hear_unknown = LUA->GetBool(1);
-	if (status == nullptr) return 0;
-
-	status->hear_unknown_clients = hear_unknown;
-
-	return 0;
-}
-
 void gs_pushCMD(lua_State* state, int key, int callback) {
 	if (commandList.size() >= CMD_BUF) {
 		gs_printError(state, "CommandList full - check for sendName / forceMove spam");
@@ -324,37 +315,6 @@ int gs_setClientBroadcasting(lua_State* state) {
 	return 1;
 }
 
-int gs_setClientAudible(lua_State* state) {
-	LUA->CheckType(1, GarrysMod::Lua::Type::NUMBER); int clientId = (int)LUA->GetNumber(1);
-	LUA->CheckType(2, GarrysMod::Lua::Type::BOOL); bool newVal = LUA->GetBool(2);
-
-	bool exist = false;
-	int i = gs_searchPlayer(state, clientId, &exist);
-
-	if (!exist) {
-		LUA->PushBool(false);
-		return 1;
-	}
-
-	clients[i].maybe_audible = newVal;
-	LUA->PushBool(true);
-	return 1;
-}
-
-int gs_setEntAudible(lua_State* state) {
-	LUA->CheckType(1, GarrysMod::Lua::Type::NUMBER); int entId = (int)LUA->GetNumber(1);
-	LUA->CheckType(2, GarrysMod::Lua::Type::BOOL); bool newVal = LUA->GetBool(2);
-
-	for (int i = 0; clients[i].clientID != 0 && i < PLAYER_MAX; i++) {
-		if (clients_local[i].entID == entId) {
-			clients[i].maybe_audible = newVal;
-			break;
-		}
-	}
-
-	return 0;
-}
-
 int gs_fixAudio(lua_State* state) {
 	LUA->CheckType(1, GarrysMod::Lua::Type::FUNCTION); LUA->Push(1); int callback = LUA->ReferenceCreate();
 	gs_pushCMD(state, (int)CMD_FIX3D, callback);
@@ -394,10 +354,6 @@ int gs_sendPos(lua_State* state)
 				return 0;
 			}
 		//}
-	}
-	else {
-		// if the client didn't exist, default this to true
-		clients[i].maybe_audible = true;
 	}
 
 	//Add new data
@@ -536,8 +492,7 @@ int gs_getAllID(lua_State* state) {
 	M(delAll) M(getTsID) M(getInChannel) \
 	M(getArray) M(talkCheck) M(getGspeakVersion) \
 	M(setClientBroadcasting) M(getAllID) \
-	M(setClientAudible) M(setEntAudible) \
-	M(setHearUnknown) M(fixAudio)
+	M(fixAudio)
 	/*M(getTsLibVersion)  M(getVolumeOf) */ 
 
 //*************************************

@@ -61,8 +61,7 @@ gspeak.settings = {
 	nickname = true,
 	def_initialForceMove = true,
 	updateName = false,
-	hear_channel_commander = true,
-	hear_unknown_clients = false
+	hear_channel_commander = true
 }
 
 gspeak.sounds = {

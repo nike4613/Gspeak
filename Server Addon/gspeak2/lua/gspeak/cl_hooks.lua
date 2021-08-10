@@ -263,11 +263,12 @@ hook.Add("Think", "Gspeak", function()
 				continue
 			end
 
-			tslib.setClientBroadcasting(ts_id_v, v.broadcasting or false)
+			if tslib.setClientBroadcasting then
+				tslib.setClientBroadcasting(ts_id_v, v.broadcasting or false)
+			end
 
 			if distance < distance_max then
 				tslib.sendPos(ts_id_v, gspeak:calcVolume( distance, distance_max ), v_index, playerPos.x, playerPos.y, playerPos.z, false)
-				tslib.setClientAudible(ts_id_v, true)
 			end
 		end
 	end
@@ -279,13 +280,11 @@ hook.Add("Think", "Gspeak", function()
 				local v_radio_ent = Entity(v.radio_id)
 				if v_radio_ent and IsValid(v_radio_ent) and v_ent:IsRadio() and v_radio_ent:IsRadio() then
 					if !client_alive and !gspeak.settings.dead_alive then
-						--tslib.delPos(v.ent_id, true, v.radio_id)
-						tslib.setEntAudible(v.ent_id, false)
+						tslib.delPos(v.ent_id, true, v.radio_id)
 					else
 						local distance, distance_max = gspeak:get_distances(v_radio_ent, 1)
 						if distance > distance_max then
-							--tslib.delPos(v.ent_id, true, v.radio_id)
-							tslib.setEntAudible(v.ent_id, false)
+							tslib.delPos(v.ent_id, true, v.radio_id)
 						end
 					end
 				else
@@ -297,24 +296,20 @@ hook.Add("Think", "Gspeak", function()
 				//THendon ich glaube du wolltest dir die infos direkt aus dem ts ziehn, aber irgenwie ist die variable für was anderes.
         --if v_ent.talking != v.talking then v_ent.talking = v.talking end
 
-				local tsid = gspeak:get_tsid(v_ent)
-				if tsid == -1 then
+				if gspeak:get_tsid(v_ent) == -1 then
 					tslib.delPos(v.ent_id, false)
 				elseif gspeak:player_alive(Entity(v.ent_id)) then
 					if ( !client_alive and !gspeak.settings.dead_alive ) then
-						--tslib.delPos(v.ent_id, false)
-						tslib.setClientAudible(tsid, false)
+						tslib.delPos(v.ent_id, false)
 					else
 						local distance, distance_max = gspeak:get_distances(v_ent, gspeak:get_talkmode( v_ent ))
 						if distance > distance_max then
-							--tslib.delPos(v.ent_id, false)
-							tslib.setClientAudible(tsid, false)
+							tslib.delPos(v.ent_id, false)
 						end
 					end
 				else
 					if !gspeak.settings.dead_chat or client_alive or gspeak.cl.dead_muted then
-						--tslib.delPos(v.ent_id, false)
-						tslib.setClientAudible(tsid, false)
+						tslib.delPos(v.ent_id, false)
 					end
 				end
 			else
