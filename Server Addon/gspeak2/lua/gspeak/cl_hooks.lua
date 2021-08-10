@@ -215,12 +215,6 @@ hook.Add("Think", "Gspeak", function()
 	--Add player entitys to C++ Struct of hearable Players
 	local client_alive = gspeak:player_alive(LocalPlayer())
 
-	if gspeak.settings.dead_chat and !client_alive and !gspeak.cl.dead_muted then
-		tslib.setHearUnknown(hear_unknown_clients or false)
-	else
-		tslib.setHearUnknown(false)
-	end
-
 	if gspeak.chill < now then
 		gspeak:UpdatePlayers()
 		gspeak.chill = now + 10

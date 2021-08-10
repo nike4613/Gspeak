@@ -338,6 +338,8 @@ bool gs_fix3d(Status const* status, uint64 serverConnectionHandlerID, anyID clie
 	for (auto user = users; *user != 0; user++) {
 		ts3Functions.channelset3DAttributes(serverConnectionHandlerID, *user, &zero);
 	}
+
+	return true;
 }
 
 std::mutex cmdLock;
