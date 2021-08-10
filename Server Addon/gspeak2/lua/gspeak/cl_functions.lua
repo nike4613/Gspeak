@@ -328,7 +328,9 @@ function gspeak:player_alive(ply)
 end
 
 function gspeak:fix_audio(callback)
-	tslib.fixAudio(callback or function() end)
+	if tslib.fixAudio then
+		tslib.fixAudio(callback or function() end)
+	end
 end
 
 //Thendon du hast hioer einfach aufgehört lol
